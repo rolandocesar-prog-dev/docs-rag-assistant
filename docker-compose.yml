@@ -1,5 +1,6 @@
-# Base de datos de desarrollo: PostgreSQL + pgvector (specs/design.md, sección 3).
-# Uso: cp .env.example .env  →  docker compose up -d db  →  alembic upgrade head
+# Servicios de desarrollo: PostgreSQL + pgvector y Ollama (specs/design.md, sección 3).
+# Uso: cp .env.example .env  →  docker compose up -d  →  alembic upgrade head
+#      docker compose exec ollama ollama pull bge-m3   (una sola vez, 1,2 GB)
 services:
   db:
     image: pgvector/pgvector:0.8.7-pg18
@@ -19,5 +20,18 @@ services:
       timeout: 3s
       retries: 10
 
+  ollama:
+    image: ollama/ollama:0.40.14
+    ports:
+      - "127.0.0.1:${RAG_OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - rag-ollama:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
 volumes:
   rag-db:
+  rag-ollama:

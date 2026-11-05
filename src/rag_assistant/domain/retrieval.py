@@ -5,6 +5,9 @@ from dataclasses import dataclass
 
 from rag_assistant.domain.chunk import Chunk
 
+# Dimensión de la columna `chunks.embedding` (bge-m3); cambiarla exige una migración.
+EMBEDDING_DIMENSIONS = 1024
+
 
 @dataclass(frozen=True, slots=True)
 class EmbeddedChunk:

@@ -14,6 +14,7 @@ class _TestSettings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_prefix="RAG_", extra="ignore")
 
     test_database_url: str | None = None
+    test_ollama_url: str | None = None
 
 
 @pytest.fixture(scope="session")
@@ -22,6 +23,15 @@ def test_database_url() -> str:
     url = _TestSettings().test_database_url
     if not url:
         pytest.skip("RAG_TEST_DATABASE_URL no está definida")
+    return url
+
+
+@pytest.fixture(scope="session")
+def test_ollama_url() -> str:
+    """URL de Ollama con bge-m3; sin RAG_TEST_OLLAMA_URL, la prueba se omite (design.md)."""
+    url = _TestSettings().test_ollama_url
+    if not url:
+        pytest.skip("RAG_TEST_OLLAMA_URL no está definida")
     return url
 
 

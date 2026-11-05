@@ -62,8 +62,13 @@ sobre ellos.
 
 ### RF-04 · Proveedor de modelos intercambiable
 
-- El sistema DEBE permitir cambiar el proveedor de LLM y de embeddings por configuración, sin
-  cambiar código: modelo local (Ollama), API compatible con OpenAI y API de Anthropic.
+- El sistema DEBE permitir cambiar el proveedor de LLM por configuración, sin cambiar código:
+  modelo local (Ollama), API compatible con OpenAI y API de Anthropic.
+- El sistema DEBE permitir cambiar el proveedor de embeddings por configuración, sin cambiar
+  código: modelo local (Ollama) y API compatible con OpenAI. (Anthropic no ofrece un modelo de
+  embeddings.)
+- SI el proveedor de embeddings devuelve vectores de una dimensión distinta a la del esquema, el
+  sistema DEBE detener la ingesta con un error explícito.
 - SI falta la clave de API del proveedor configurado, el sistema DEBE fallar al iniciar con un
   mensaje explícito.
 

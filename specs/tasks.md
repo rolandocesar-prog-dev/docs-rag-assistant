@@ -17,7 +17,7 @@ Cada tarea referencia el requisito que cumple. Marca `[x]` al terminar y haz un 
 - [x] Divisor de fragmentos por encabezado y tamaño, con pruebas de bordes.
 - [x] `docker-compose.yml` con PostgreSQL + pgvector y migración inicial.
 - [x] Adaptador `VectorStore` (pgvector) con prueba de integración.
-- [ ] Puerto `EmbeddingProvider` y adaptador Ollama.
+- [x] Puerto `EmbeddingProvider` y adaptador Ollama.
 - [ ] CLI `rag-ingest <carpeta>` idempotente por hash.
 
 ## M2 · Preguntas y citas (RF-02, RF-03)

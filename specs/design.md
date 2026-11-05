@@ -85,6 +85,9 @@ La URL de conexión llega por `RAG_DATABASE_URL` (RNF-02).
 - Las pruebas de integración usan `RAG_TEST_DATABASE_URL`. Si no está definida, se omiten y Pytest
   lo muestra; si está definida y la base no responde, fallan. En CI, un servicio de PostgreSQL con
   pgvector la define, así que siempre se ejecutan.
+- `docker compose up -d ollama` levanta `ollama/ollama:0.40.14` en `127.0.0.1:11434`, con los
+  modelos en un volumen. El modelo se descarga una vez: `docker compose exec ollama ollama pull
+  bge-m3` (1,2 GB). En Windows, Docker no usa GPUs AMD: Ollama corre en CPU.
 
 ### Entidades del dominio
 
@@ -122,6 +125,24 @@ PDF escaneado), `Document` lanza `EmptyDocumentError` y la ingesta lo omite info
 - El adaptador `PgVectorStore` usa SQLAlchemy Core con SQL explícito y el operador `<=>`
   (distancia de coseno) de pgvector, que aprovecha el índice HNSW. Los vectores viajan como texto
   (`'[0.1, …]'::vector`), sin dependencias extra.
+
+### Embeddings (RF-01, RF-04)
+
+- El puerto `EmbeddingProvider` define `embed(texts) -> list[tuple[float, ...]]`: un vector por
+  texto, en el mismo orden.
+- `EMBEDDING_DIMENSIONS = 1024` (dominio) es la dimensión del esquema. Si el proveedor no responde,
+  no tiene el modelo, devuelve otra cantidad de vectores o vectores de otra dimensión, el
+  adaptador lanza `EmbeddingError` con un mensaje explícito.
+- El adaptador `OllamaEmbeddings` llama a `POST /api/embed` con `{"model", "input": [...]}`, por
+  lotes (`RAG_EMBEDDING_BATCH_SIZE`, 32 por defecto), usando `httpx` con tiempo de espera.
+  Configuración: `RAG_OLLAMA_URL` y `RAG_EMBEDDING_MODEL` (`bge-m3`).
+- El adaptador compatible con OpenAI se agrega en M3, sobre el mismo puerto.
+- Pruebas: unitarias con `httpx2.MockTransport` (sin red); integración contra Ollama real solo si
+  `RAG_TEST_OLLAMA_URL` está definida. En CI no se ejecuta, porque el modelo pesa 1,2 GB.
+- Cliente HTTP: `httpx2`, sucesor mantenido de `httpx` (que Starlette ya marca como obsoleto).
+- Rendimiento medido (2026-11-05, Ollama en Docker solo con CPU, Ryzen 5 8600G): el corpus
+  completo (862 fragmentos) tarda ≈ 5,4 min, unos 2,7 fragmentos/s; embeber una pregunta tarda
+  ≈ 40 ms. La ingesta es puntual y solo reprocesa documentos cambiados, así que la CPU alcanza.
 
 ### Cargadores (RF-01)
 

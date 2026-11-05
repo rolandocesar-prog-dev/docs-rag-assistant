@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     environment: str = "development"
     # Sin valor por defecto: las credenciales solo llegan por el entorno (RNF-02).
     database_url: str | None = None
+    ollama_url: str = "http://127.0.0.1:11434"
+    embedding_model: str = "bge-m3"
+    embedding_batch_size: int = 32
 
 
 @lru_cache

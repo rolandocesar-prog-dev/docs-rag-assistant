@@ -3,6 +3,10 @@
 from pathlib import Path
 
 
+class EmbeddingError(Exception):
+    """El proveedor de embeddings falló o dio vectores inválidos (RF-04): detiene la ingesta."""
+
+
 class EmptyDocumentError(ValueError):
     """El documento no tiene texto tras la limpieza; la ingesta lo omite e informa."""
 
