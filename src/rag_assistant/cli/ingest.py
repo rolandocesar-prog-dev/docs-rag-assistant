@@ -6,9 +6,9 @@ import time
 from collections.abc import Sequence
 from pathlib import Path
 
-from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
 
+from rag_assistant.adapters.database import create_database_engine
 from rag_assistant.adapters.embeddings.ollama import OllamaEmbeddings
 from rag_assistant.adapters.loaders.markdown import MarkdownLoader
 from rag_assistant.adapters.loaders.pdf import PdfLoader
@@ -21,7 +21,6 @@ from rag_assistant.domain.errors import EmbeddingError
 EXIT_OK = 0
 EXIT_FAILURE = 1
 EXIT_USAGE = 2
-DB_CONNECT_TIMEOUT_SECONDS = 10
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -42,10 +41,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print("Falta RAG_DATABASE_URL: defínela en .env (ver .env.example).", file=sys.stderr)
         return EXIT_USAGE
 
-    # Sin tiempo de espera, una base caída puede tardar minutos en dar error.
-    engine = create_engine(
-        settings.database_url, connect_args={"connect_timeout": DB_CONNECT_TIMEOUT_SECONDS}
-    )
+    engine = create_database_engine(settings.database_url)
     try:
         service = IngestService(
             [MarkdownLoader(), TextLoader(), PdfLoader()],

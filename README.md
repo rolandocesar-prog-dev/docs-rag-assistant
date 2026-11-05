@@ -45,6 +45,34 @@ uvicorn rag_assistant.main:app --reload
 # http://localhost:8000/health  ·  documentación interactiva: http://localhost:8000/docs
 ```
 
+## Preguntar
+
+```bash
+curl -X POST http://localhost:8000/ask -H "Content-Type: application/json" \
+  -d '{"question": "¿Qué es un StatefulSet?"}'
+```
+
+```json
+{
+  "answer": "Un StatefulSet es el objeto de la API workload diseñado para gestionar aplicaciones con estado, proporcionando identificaciones de red estables y almacenamiento persistente [1]. …",
+  "citations": [
+    {
+      "id": 1,
+      "document": "StatefulSets",
+      "section": null,
+      "page": null,
+      "source_path": "concepts/workloads/controllers/statefulset.md",
+      "excerpt": "Un StatefulSet es el objeto de la API workload que se usa para gestionar aplicaciones con estado…"
+    }
+  ],
+  "found": true
+}
+```
+
+Si la documentación no cubre la pregunta, responde `found: false` sin inventar nada. Errores: `422`
+(pregunta vacía o de más de 1 000 caracteres), `502` (falló el modelo) y `503` (la base no
+responde).
+
 ## Calidad
 
 ```bash

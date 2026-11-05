@@ -320,15 +320,37 @@ recuperación conocido: «guardar una contraseña» no trae la página de Secret
 | POST   | `/ingest` | Sube un archivo para ingesta.             |
 | GET    | `/`       | Página web de chat.                       |
 
-Respuesta de `/ask`:
+Respuesta de `/ask` (`200`, también cuando no encuentra información: `found` lo indica):
 
 ```json
 {
-  "answer": "Texto con citas [1][2].",
-  "citations": [{ "id": 1, "document": "guia.md", "section": "Instalación", "excerpt": "..." }],
+  "answer": "Un Pod agrupa contenedores [1].",
+  "citations": [
+    {
+      "id": 1,
+      "document": "Pods",
+      "section": "¿Qué es un Pod?",
+      "page": null,
+      "source_path": "concepts/workloads/pods/pod.md",
+      "excerpt": "Un Pod es un grupo de uno o más contenedores…"
+    }
+  ],
   "found": true
 }
 ```
+
+Errores de `/ask`, siempre con `{"detail": …}`:
+
+| Código | Cuándo                                                                                    |
+| ------ | ----------------------------------------------------------------------------------------- |
+| 422    | Falta `question`, no es texto, está vacía o solo con espacios, o supera 1 000 caracteres. |
+| 502    | El proveedor de embeddings o el LLM falló o respondió algo inválido (incluye el tope).    |
+| 503    | La base de datos no responde o falta `RAG_DATABASE_URL`.                                  |
+
+El endpoint es síncrono (FastAPI lo ejecuta en su pool de hilos), porque los adaptadores lo son.
+`AskService` se arma una sola vez (`api/dependencies.py`) y las pruebas lo reemplazan con dobles
+mediante `dependency_overrides`. La CLI y la API crean la conexión a la base con la misma función
+(`adapters/database.py`), con un tiempo de espera de 10 s.
 
 ## 6. Decisiones
 
