@@ -72,6 +72,23 @@ CREATE TABLE chunks (
 CREATE INDEX ON chunks USING hnsw (embedding vector_cosine_ops);
 ```
 
+### Entidades del dominio
+
+Son inmutables (`dataclass(frozen=True)`) y se validan al crearse, de modo que un objeto inválido
+no puede existir.
+
+- `Document`: `source_path`, `title`, `license` y `parts`, una tupla de `DocumentPart(text, page)`.
+  Los formatos sin páginas (Markdown, TXT) producen una sola parte con `page=None`; el PDF, una
+  por página. `content_hash` es el SHA-256 de las partes (texto y página), sin título ni licencia:
+  si el contenido no cambió, no se reingesta (RF-01).
+- `Chunk`: `document_id`, `position`, `content`, `section` y `page`. El embedding se asocia al
+  guardarlo en el `VectorStore`; no forma parte de la entidad.
+- `UnsupportedFormatError`: la ingesta la lanza si ningún cargador acepta el archivo; la API la
+  traduce a HTTP 415 y la CLI a un código de salida distinto de 0 (RF-01).
+
+El puerto `DocumentLoader` (en `ports/`) define `supports(path) -> bool` y
+`load(path, *, license) -> Document`. Cada formato es un adaptador en `adapters/loaders/`.
+
 ## 4. Flujos
 
 **Ingesta (RF-01):** cargar archivo → normalizar texto → calcular hash → si no cambió, terminar →

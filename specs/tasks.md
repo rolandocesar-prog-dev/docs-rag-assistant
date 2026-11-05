@@ -12,7 +12,7 @@ Cada tarea referencia el requisito que cumple. Marca `[x]` al terminar y haz un 
 ## M1 · Ingesta (RF-01)
 
 - [x] Elegir el corpus de demostración y registrar sus licencias en `data/SOURCES.md`.
-- [ ] Entidades `Document` y `Chunk` y el puerto `DocumentLoader`.
+- [x] Entidades `Document` y `Chunk` y el puerto `DocumentLoader`.
 - [ ] Cargadores de Markdown y TXT con pruebas; PDF con `pypdf`.
 - [ ] Divisor de fragmentos por encabezado y tamaño, con pruebas de bordes.
 - [ ] `docker-compose.yml` con PostgreSQL + pgvector y migración inicial.

@@ -47,3 +47,7 @@ packages = ["rag_assistant"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra --cov=rag_assistant --cov-report=term-missing"
+
+[tool.coverage.report]
+# Los puertos son interfaces (Protocol): sus cuerpos `...` nunca se ejecutan.
+exclude_also = ["class .*\\(Protocol\\):"]
