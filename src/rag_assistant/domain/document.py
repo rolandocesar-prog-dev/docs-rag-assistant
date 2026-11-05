@@ -5,6 +5,8 @@ import json
 from dataclasses import dataclass, field
 from uuid import UUID, uuid4
 
+from rag_assistant.domain.errors import EmptyDocumentError
+
 
 @dataclass(frozen=True, slots=True)
 class DocumentPart:
@@ -31,7 +33,7 @@ class Document:
             if not getattr(self, name).strip():
                 raise ValueError(f"El campo {name} no puede estar vacío.")
         if not any(part.text.strip() for part in self.parts):
-            raise ValueError("El documento no tiene texto.")
+            raise EmptyDocumentError(f"El documento {self.source_path} no tiene texto.")
 
     @property
     def content_hash(self) -> str:

@@ -89,6 +89,34 @@ no puede existir.
 El puerto `DocumentLoader` (en `ports/`) define `supports(path) -> bool` y
 `load(path, *, license) -> Document`. Cada formato es un adaptador en `adapters/loaders/`.
 
+Si tras la limpieza un archivo no tiene texto (por ejemplo, un `_index.md` con solo metadatos o un
+PDF escaneado), `Document` lanza `EmptyDocumentError` y la ingesta lo omite informándolo.
+
+### Cargadores (RF-01)
+
+Todos leen UTF-8 (con o sin BOM), unifican los fines de línea en `\n`, quitan espacios al final de
+cada línea y reducen las líneas en blanco consecutivas a una.
+
+| Formato  | Extensiones          | Título                                              | Partes         |
+| -------- | -------------------- | --------------------------------------------------- | -------------- |
+| Markdown | `.md`, `.markdown`   | `title` del bloque YAML, primer encabezado o nombre | Una            |
+| Texto    | `.txt`               | Nombre del archivo                                  | Una            |
+| PDF      | `.pdf` (con `pypdf`) | Título de los metadatos o nombre del archivo        | Una por página |
+
+El Markdown conserva sus encabezados, que usa el divisor de fragmentos. Además, se quitan el bloque
+YAML inicial (`---`), los comentarios HTML y las etiquetas de Hugo (`{{< … >}}`, `{{% … %}}`):
+
+| Etiqueta                                         | Se reemplaza por                                           |
+| ------------------------------------------------ | ---------------------------------------------------------- |
+| `glossary_tooltip`, `link`                       | Su `text` (o `term_id`), para no cortar la frase.          |
+| `figure`, `table`, `alert`, `tab`                | Su `caption`, `title` o `name`.                            |
+| `feature-state`                                  | «Estado de la función: Kubernetes vX [estado]».            |
+| `heading "whatsnext"`                            | «¿Qué sigue?».                                             |
+| `comment` … `/comment`                           | Nada: se elimina con su contenido.                         |
+| Cualquier otra (`note`, `param`, `code_sample`…) | Nada: se quita la etiqueta y se conserva el texto interno. |
+
+Las páginas de PDF sin texto se omiten; el número de página de las demás se conserva.
+
 ## 4. Flujos
 
 **Ingesta (RF-01):** cargar archivo → normalizar texto → calcular hash → si no cambió, terminar →
