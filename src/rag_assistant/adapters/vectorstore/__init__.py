@@ -1,0 +1,1 @@
+"""Almacenes vectoriales (puerto `VectorStore`)."""

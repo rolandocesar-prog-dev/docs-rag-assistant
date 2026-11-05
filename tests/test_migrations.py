@@ -1,7 +1,6 @@
 """Integración: la migración inicial crea y elimina el esquema de design.md en PostgreSQL real."""
 
 from collections.abc import Iterator
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -10,21 +9,11 @@ from alembic.config import Config
 from sqlalchemy import Connection, create_engine, inspect, text
 from sqlalchemy.exc import DataError, IntegrityError
 
-ROOT = Path(__file__).resolve().parents[1]
-
-
-def alembic_config(url: str) -> Config:
-    config = Config(str(ROOT / "alembic.ini"))
-    config.set_main_option("script_location", str(ROOT / "migrations"))
-    config.set_main_option("sqlalchemy.url", url.replace("%", "%%"))
-    return config
-
 
 @pytest.fixture
-def migrated(test_database_url: str) -> Iterator[Connection]:
-    config = alembic_config(test_database_url)
-    command.downgrade(config, "base")
-    command.upgrade(config, "head")
+def migrated(test_database_url: str, alembic_config: Config) -> Iterator[Connection]:
+    command.downgrade(alembic_config, "base")
+    command.upgrade(alembic_config, "head")
     engine = create_engine(test_database_url)
     with engine.connect() as connection:
         yield connection
@@ -92,14 +81,13 @@ def test_schema_enforces_dimension_uniqueness_and_cascade(migrated: Connection) 
     assert remaining == 0
 
 
-def test_downgrade_removes_the_schema(test_database_url: str) -> None:
-    config = alembic_config(test_database_url)
-    command.upgrade(config, "head")
+def test_downgrade_removes_the_schema(test_database_url: str, alembic_config: Config) -> None:
+    command.upgrade(alembic_config, "head")
 
-    command.downgrade(config, "base")
+    command.downgrade(alembic_config, "base")
 
     engine = create_engine(test_database_url)
     with engine.connect() as connection:
         assert not {"documents", "chunks"} & set(inspect(connection).get_table_names())
     engine.dispose()
-    command.upgrade(config, "head")
+    command.upgrade(alembic_config, "head")

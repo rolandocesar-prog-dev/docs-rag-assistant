@@ -16,7 +16,7 @@ Cada tarea referencia el requisito que cumple. Marca `[x]` al terminar y haz un 
 - [x] Cargadores de Markdown y TXT con pruebas; PDF con `pypdf`.
 - [x] Divisor de fragmentos por encabezado y tamaño, con pruebas de bordes.
 - [x] `docker-compose.yml` con PostgreSQL + pgvector y migración inicial.
-- [ ] Adaptador `VectorStore` (pgvector) con prueba de integración.
+- [x] Adaptador `VectorStore` (pgvector) con prueba de integración.
 - [ ] Puerto `EmbeddingProvider` y adaptador Ollama.
 - [ ] CLI `rag-ingest <carpeta>` idempotente por hash.
 

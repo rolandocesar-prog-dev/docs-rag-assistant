@@ -106,6 +106,23 @@ El puerto `DocumentLoader` (en `ports/`) define `supports(path) -> bool` y
 Si tras la limpieza un archivo no tiene texto (por ejemplo, un `_index.md` con solo metadatos o un
 PDF escaneado), `Document` lanza `EmptyDocumentError` y la ingesta lo omite informándolo.
 
+### Almacén vectorial (RF-01, RF-02)
+
+- `EmbeddedChunk(chunk, embedding)` une un fragmento con su vector; `RetrievedChunk(chunk,
+  document_title, source_path, score)` es un resultado de búsqueda, con lo necesario para citar
+  (RF-03). `score` es la similitud de coseno (1 = idéntico).
+- El puerto `VectorStore` define:
+  - `content_hash(source_path) -> str | None`: hash guardado del documento, para no reingestarlo
+    si no cambió.
+  - `replace_document(document, chunks)`: borra la versión anterior del mismo `source_path` (sus
+    fragmentos caen por `ON DELETE CASCADE`) e inserta la nueva, **en una sola transacción**: si
+    algo falla, queda la versión anterior intacta.
+  - `search(embedding, *, k) -> list[RetrievedChunk]`: los `k` fragmentos más similares, de mayor
+    a menor `score`. El umbral de relevancia lo aplica `AskService` (RF-02), no el almacén.
+- El adaptador `PgVectorStore` usa SQLAlchemy Core con SQL explícito y el operador `<=>`
+  (distancia de coseno) de pgvector, que aprovecha el índice HNSW. Los vectores viajan como texto
+  (`'[0.1, …]'::vector`), sin dependencias extra.
+
 ### Cargadores (RF-01)
 
 Todos leen UTF-8 (con o sin BOM), unifican los fines de línea en `\n`, quitan espacios al final de
