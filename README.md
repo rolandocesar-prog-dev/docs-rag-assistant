@@ -29,9 +29,14 @@ python -m venv .venv
 pip install -e ".[dev]"
 cp .env.example .env              # y cambia la contraseña de la base
 
-docker compose up -d              # PostgreSQL + pgvector (5442) y Ollama (11434)
-docker compose exec ollama ollama pull bge-m3   # modelo de embeddings, una sola vez (1,2 GB)
+docker compose up -d              # PostgreSQL + pgvector en 127.0.0.1:5442
 alembic upgrade head              # crea el esquema
+
+# Ollama en 127.0.0.1:11434. Con GPU, instálalo en el equipo (https://ollama.com/download);
+# si no, úsalo en Docker: docker compose --profile ollama up -d
+ollama pull bge-m3                # embeddings, una sola vez (1,2 GB)
+ollama pull qwen3.5:4b            # modelo de lenguaje, una sola vez (3,3 GB)
+# En Docker: docker compose exec ollama ollama pull bge-m3  (y lo mismo con qwen3.5:4b)
 
 # Ingesta del corpus (≈ 5 min la primera vez en CPU; después solo procesa lo que cambió)
 rag-ingest data/corpus/kubernetes/concepts --license CC-BY-4.0

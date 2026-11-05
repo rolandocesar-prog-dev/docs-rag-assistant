@@ -85,9 +85,17 @@ La URL de conexión llega por `RAG_DATABASE_URL` (RNF-02).
 - Las pruebas de integración usan `RAG_TEST_DATABASE_URL`. Si no está definida, se omiten y Pytest
   lo muestra; si está definida y la base no responde, fallan. En CI, un servicio de PostgreSQL con
   pgvector la define, así que siempre se ejecutan.
-- `docker compose up -d ollama` levanta `ollama/ollama:0.40.14` en `127.0.0.1:11434`, con los
-  modelos en un volumen. El modelo se descarga una vez: `docker compose exec ollama ollama pull
-  bge-m3` (1,2 GB). En Windows, Docker no usa GPUs AMD: Ollama corre en CPU.
+- **Ollama**: la app solo necesita `RAG_OLLAMA_URL` (por defecto `http://127.0.0.1:11434`). Hay
+  dos formas de tenerlo:
+  - **Instalado en el equipo** (recomendado si hay GPU): usa la GPU y es ≈ 8 veces más rápido en
+    la medición de la sección de embeddings. Es la opción en el equipo de desarrollo (Windows,
+    Radeon RX 6700 XT por Vulkan).
+  - **En Docker**, para quien no tenga GPU o no quiera instalarlo: es opcional, con el *profile*
+    `ollama` (`docker compose --profile ollama up -d`), y levanta `ollama/ollama:0.40.14` en
+    `127.0.0.1:11434` con los modelos en un volumen. En Windows, Docker no usa GPUs AMD: corre en
+    CPU.
+  - En ambos casos los modelos se descargan una vez: `ollama pull bge-m3` (1,2 GB) y
+    `ollama pull qwen3.5:4b` (3,3 GB); en Docker, anteponiendo `docker compose exec ollama`.
 
 ### Entidades del dominio
 
@@ -143,6 +151,10 @@ PDF escaneado), `Document` lanza `EmptyDocumentError` y la ingesta lo omite info
 - Rendimiento medido (2026-11-05, Ollama en Docker solo con CPU, Ryzen 5 8600G): el corpus
   completo (862 fragmentos) tarda ≈ 5,4 min, unos 2,7 fragmentos/s; embeber una pregunta tarda
   ≈ 40 ms. La ingesta es puntual y solo reprocesa documentos cambiados, así que la CPU alcanza.
+  Con Ollama instalado y GPU (Radeon RX 6700 XT por Vulkan): el corpus tarda **40 s** (≈ 21,5
+  fragmentos/s, 8 veces más rápido) y una pregunta ≈ 20 ms. Los vectores de CPU y de GPU
+  coinciden (similitud de coseno ≥ 0,999 en 20 fragmentos al azar): cambiar de uno a otro no
+  obliga a reingestar.
 
 ### Modelo de lenguaje local (RF-02, RF-03)
 
@@ -163,8 +175,11 @@ tema y 1 fuera de él), 4 fragmentos de contexto y Ollama en Docker solo con CPU
   `num_predict`** (400 tokens), para que un modelo en bucle nunca deje la respuesta colgada.
 - Latencia en CPU: ≈ 75 % del tiempo es leer el contexto (≈ 100 tokens/s) y luego genera
   ≈ 15 tokens/s. Con 3 fragmentos en vez de 4 la media solo baja a 16,4 s: acortar el contexto
-  no resuelve la lentitud. RNF-01 (< 6 s) se cumple con un proveedor remoto (M3); el modelo local
-  es para desarrollo y uso sin costo.
+  no resuelve la lentitud en CPU.
+- **Con GPU** (Ollama instalado en Windows, Radeon RX 6700 XT por Vulkan; ROCm no la soporta), las
+  mismas 5 preguntas: media **2,2 s**, peor caso 3,7 s, primera palabra 1,5 s y ≈ 87 tokens/s, con
+  la misma calidad (citas 4/4 y rechazo fuera de tema). Así RNF-01 (< 6 s) se cumple también en
+  local; sin GPU, se cumple con un proveedor remoto (M3).
 - En Docker conviene un solo modelo de lenguaje cargado a la vez, además de `bge-m3`.
 
 ### Cargadores (RF-01)

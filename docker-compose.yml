@@ -1,6 +1,8 @@
-# Servicios de desarrollo: PostgreSQL + pgvector y Ollama (specs/design.md, sección 3).
+# Servicios de desarrollo (specs/design.md, sección 3).
 # Uso: cp .env.example .env  →  docker compose up -d  →  alembic upgrade head
-#      docker compose exec ollama ollama pull bge-m3   (una sola vez, 1,2 GB)
+# Ollama va aparte: instalado en el equipo (usa la GPU) o, si no, en Docker con el profile
+# `ollama`: docker compose --profile ollama up -d
+#           docker compose exec ollama ollama pull bge-m3   (y qwen3.5:4b; una sola vez)
 services:
   db:
     image: pgvector/pgvector:0.8.7-pg18
@@ -22,6 +24,8 @@ services:
 
   ollama:
     image: ollama/ollama:0.40.14
+    # Opcional: no arranca con `docker compose up` salvo que se pida el profile.
+    profiles: [ollama]
     ports:
       - "127.0.0.1:${RAG_OLLAMA_PORT:-11434}:11434"
     volumes:
