@@ -112,6 +112,19 @@ Respuesta de `/ask`:
 | Orquestación RAG            | Código propio, sin LangChain | Muestra comprensión del flujo y evita una dependencia pesada.           |
 | Proveedor de modelo inicial | Ollama (local)               | Desarrollo sin costo; los demás proveedores entran por el mismo puerto. |
 | Interfaz                    | HTML + JS sin framework      | El foco del proyecto es el backend de IA.                               |
+| Corpus de demostración      | Kubernetes, «Conceptos» (ES) | Traducción humana revisada, CC BY 4.0 y temas que entiende cualquiera.  |
+
+### Corpus de demostración
+
+- Sección «Conceptos» de la documentación de Kubernetes en español
+  (`kubernetes/website`, `content/es/docs/concepts`), con licencia CC BY 4.0.
+- Se versiona una copia **sin modificar** en `data/corpus/kubernetes/`, fijada a un commit del
+  repositorio de origen. Así la evaluación (RF-06) es reproducible y `docker compose up` no depende
+  de descargas. El commit, la licencia y la atribución se registran en `data/SOURCES.md`.
+- La limpieza (metadatos YAML, etiquetas de Hugo, comentarios HTML) la hace el cargador de
+  Markdown, no se aplica a los archivos.
+- Como el corpus está en español, el modelo de embeddings debe ser multilingüe; se elige en la
+  tarea del adaptador de embeddings y se registra en esta tabla.
 
 ## 7. Estrategia de pruebas
 

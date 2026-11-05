@@ -1,0 +1,2 @@
+# El corpus es una copia sin modificar de su origen: git no debe tocar sus fines de línea.
+data/corpus/** -text
