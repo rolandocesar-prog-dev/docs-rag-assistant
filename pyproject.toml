@@ -11,7 +11,10 @@ license = "MIT"
 authors = [{ name = "Rolando César Vásquez Tavera" }]
 requires-python = ">=3.11"
 dependencies = [
+  "alembic>=1.20",
   "fastapi>=0.115",
+  "psycopg[binary]>=3.3",
+  "sqlalchemy>=2.1",
   "uvicorn[standard]>=0.30",
   "pydantic-settings>=2.4",
   "pypdf>=6.21",
@@ -43,7 +46,7 @@ select = ["E", "W", "F", "I", "B", "UP", "N", "SIM", "RUF"]
 python_version = "3.11"
 strict = true
 mypy_path = "src"
-files = ["src/rag_assistant", "tests"]
+files = ["src/rag_assistant", "tests", "migrations"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

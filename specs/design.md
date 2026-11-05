@@ -62,15 +62,29 @@ CREATE TABLE documents (
 CREATE TABLE chunks (
     id          UUID PRIMARY KEY,
     document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
-    position    INT  NOT NULL,
+    position    INT  NOT NULL CHECK (position >= 0),
     section     TEXT,
-    page        INT,
+    page        INT  CHECK (page >= 1),
     content     TEXT NOT NULL,
-    embedding   vector(768) NOT NULL  -- la dimensión depende del modelo de embeddings
+    embedding   vector(1024) NOT NULL,  -- dimensión de bge-m3 (ver sección 6)
+    UNIQUE (document_id, position)
 );
 
 CREATE INDEX ON chunks USING hnsw (embedding vector_cosine_ops);
 ```
+
+El esquema se crea y versiona con **Alembic** (`migrations/`), con SQL explícito en cada migración.
+La URL de conexión llega por `RAG_DATABASE_URL` (RNF-02).
+
+### Base de datos local y pruebas de integración
+
+- `docker compose up -d db` levanta `pgvector/pgvector:0.8.7-pg18` con las bases `rag` y
+  `rag_test`, publicada solo en `127.0.0.1:5442` (5432 y 5433 suelen estar ocupados por otros
+  proyectos). La contraseña sale de `RAG_DB_PASSWORD` en `.env`.
+- `alembic upgrade head` aplica las migraciones sobre `RAG_DATABASE_URL`.
+- Las pruebas de integración usan `RAG_TEST_DATABASE_URL`. Si no está definida, se omiten y Pytest
+  lo muestra; si está definida y la base no responde, fallan. En CI, un servicio de PostgreSQL con
+  pgvector la define, así que siempre se ejecutan.
 
 ### Entidades del dominio
 
@@ -136,9 +150,9 @@ embeddings por lotes → reemplazar los fragmentos del documento en una sola tra
 4. Cada fragmento siguiente de la misma sección empieza con el final del anterior (solapamiento),
    cortado en un límite de palabra. Ningún fragmento supera el máximo.
 
-El tamaño se mide en caracteres, porque aún no hay modelo de embeddings elegido: por defecto,
-3 200 de máximo y 400 de solapamiento (≈ 800 y 100 tokens, con unos 4 caracteres por token). Ambos
-son parámetros y se ajustarán al límite de entrada del modelo cuando se elija.
+El tamaño se mide en caracteres para no depender del tokenizador: por defecto, 3 200 de máximo y
+400 de solapamiento (≈ 800 y 100 tokens, con unos 4 caracteres por token). Ambos son parámetros y
+quedan muy por debajo del límite de `bge-m3` (8 192 tokens).
 
 **Pregunta (RF-02, RF-03):** validar la pregunta → embedding de la pregunta → búsqueda por
 similitud de coseno (k = 5) → descartar resultados bajo el umbral → si no queda ninguno, responder
@@ -167,14 +181,16 @@ Respuesta de `/ask`:
 
 ## 6. Decisiones
 
-| Decisión                    | Elección                     | Motivo                                                                  |
-| --------------------------- | ---------------------------- | ----------------------------------------------------------------------- |
-| Base vectorial              | PostgreSQL + pgvector        | Un solo servicio para datos y vectores, SQL conocido, fácil en Docker.  |
-| Framework web               | FastAPI                      | Tipado con Pydantic, OpenAPI automático, asíncrono.                     |
-| Orquestación RAG            | Código propio, sin LangChain | Muestra comprensión del flujo y evita una dependencia pesada.           |
-| Proveedor de modelo inicial | Ollama (local)               | Desarrollo sin costo; los demás proveedores entran por el mismo puerto. |
-| Interfaz                    | HTML + JS sin framework      | El foco del proyecto es el backend de IA.                               |
-| Corpus de demostración      | Kubernetes, «Conceptos» (ES) | Traducción humana revisada, CC BY 4.0 y temas que entiende cualquiera.  |
+| Decisión                    | Elección                     | Motivo                                                                    |
+| --------------------------- | ---------------------------- | ------------------------------------------------------------------------- |
+| Base vectorial              | PostgreSQL + pgvector        | Un solo servicio para datos y vectores, SQL conocido, fácil en Docker.    |
+| Framework web               | FastAPI                      | Tipado con Pydantic, OpenAPI automático, asíncrono.                       |
+| Orquestación RAG            | Código propio, sin LangChain | Muestra comprensión del flujo y evita una dependencia pesada.             |
+| Proveedor de modelo inicial | Ollama (local)               | Desarrollo sin costo; los demás proveedores entran por el mismo puerto.   |
+| Interfaz                    | HTML + JS sin framework      | El foco del proyecto es el backend de IA.                                 |
+| Corpus de demostración      | Kubernetes, «Conceptos» (ES) | Traducción humana revisada, CC BY 4.0 y temas que entiende cualquiera.    |
+| Modelo de embeddings        | `bge-m3` (Ollama), 1 024 dim | Multilingüe (100+ idiomas), entradas de hasta 8 192 tokens, licencia MIT. |
+| Migraciones                 | Alembic con SQL explícito    | Estándar en Python, versionadas y reversibles; el SQL queda a la vista.   |
 
 ### Corpus de demostración
 
@@ -185,8 +201,8 @@ Respuesta de `/ask`:
   de descargas. El commit, la licencia y la atribución se registran en `data/SOURCES.md`.
 - La limpieza (metadatos YAML, etiquetas de Hugo, comentarios HTML) la hace el cargador de
   Markdown, no se aplica a los archivos.
-- Como el corpus está en español, el modelo de embeddings debe ser multilingüe; se elige en la
-  tarea del adaptador de embeddings y se registra en esta tabla.
+- Como el corpus está en español, el modelo de embeddings debe ser multilingüe: se eligió
+  `bge-m3` (ver la tabla de decisiones).
 
 ## 7. Estrategia de pruebas
 

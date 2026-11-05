@@ -27,7 +27,10 @@ Mypy · Docker · GitHub Actions
 python -m venv .venv
 # Windows: .venv\Scripts\activate   ·   Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
-cp .env.example .env
+cp .env.example .env              # y cambia la contraseña de la base
+
+docker compose up -d db           # PostgreSQL + pgvector en 127.0.0.1:5442
+alembic upgrade head              # crea el esquema
 
 uvicorn rag_assistant.main:app --reload
 # http://localhost:8000/health  ·  documentación interactiva: http://localhost:8000/docs
@@ -38,7 +41,7 @@ uvicorn rag_assistant.main:app --reload
 ```bash
 ruff check . && ruff format --check .
 mypy
-pytest
+pytest   # las pruebas de integración usan RAG_TEST_DATABASE_URL; sin ella, se omiten
 ```
 
 ## Cómo se desarrolla

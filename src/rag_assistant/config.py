@@ -10,6 +10,8 @@ class Settings(BaseSettings):
 
     app_name: str = "RAG Assistant"
     environment: str = "development"
+    # Sin valor por defecto: las credenciales solo llegan por el entorno (RNF-02).
+    database_url: str | None = None
 
 
 @lru_cache

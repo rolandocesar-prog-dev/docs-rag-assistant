@@ -1,0 +1,23 @@
+# Base de datos de desarrollo: PostgreSQL + pgvector (specs/design.md, sección 3).
+# Uso: cp .env.example .env  →  docker compose up -d db  →  alembic upgrade head
+services:
+  db:
+    image: pgvector/pgvector:0.8.7-pg18
+    environment:
+      POSTGRES_USER: rag
+      POSTGRES_PASSWORD: ${RAG_DB_PASSWORD:?Define RAG_DB_PASSWORD en .env (ver .env.example)}
+      POSTGRES_DB: rag
+    ports:
+      - "127.0.0.1:${RAG_DB_PORT:-5442}:5432"
+    volumes:
+      - rag-db:/var/lib/postgresql
+      # Crea también la base rag_test para las pruebas de integración.
+      - ./docker/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rag -d rag"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  rag-db:
