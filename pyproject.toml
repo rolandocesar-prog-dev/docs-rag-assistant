@@ -21,6 +21,9 @@ dependencies = [
   "pypdf>=6.21",
 ]
 
+[project.scripts]
+rag-ingest = "rag_assistant.cli.ingest:main"
+
 [project.optional-dependencies]
 dev = [
   "mypy>=1.11",
@@ -53,5 +56,6 @@ testpaths = ["tests"]
 addopts = "-ra --cov=rag_assistant --cov-report=term-missing"
 
 [tool.coverage.report]
-# Los puertos son interfaces (Protocol): sus cuerpos `...` nunca se ejecutan.
-exclude_also = ["class .*\\(Protocol\\):"]
+# Los puertos son interfaces (Protocol): sus cuerpos `...` nunca se ejecutan. El bloque
+# `__main__` solo se usa al llamar el módulo con `python -m`.
+exclude_also = ["class .*\\(Protocol\\):", "if __name__ == .__main__.:"]

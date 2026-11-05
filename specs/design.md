@@ -192,6 +192,27 @@ El tamaño se mide en caracteres para no depender del tokenizador: por defecto, 
 400 de solapamiento (≈ 800 y 100 tokens, con unos 4 caracteres por token). Ambos son parámetros y
 quedan muy por debajo del límite de `bge-m3` (8 192 tokens).
 
+**Caso de uso de ingesta** (`application/ingest.py`, `IngestService`):
+
+- Recibe un archivo o una carpeta (recorrida en orden alfabético y de forma recursiva; se ignoran
+  archivos y carpetas ocultos, los que empiezan con `.`).
+- `source_path` es la ruta **relativa a la carpeta padre** de lo ingestado, con `/`: ingestar
+  `data/corpus/kubernetes/concepts` guarda `concepts/workloads/pods/pod.md`. Así la ruta no depende
+  del equipo y la idempotencia funciona en cualquier máquina, siempre que se ingeste la misma
+  carpeta.
+- Cada archivo termina en un estado: `ingestado` (con su número de fragmentos), `sin cambios`
+  (mismo hash), `vacío` (`EmptyDocumentError`) o `formato no soportado`. Los vacíos y los no
+  soportados se informan y no detienen el resto; un `EmbeddingError` sí detiene la ingesta.
+- Los archivos que desaparecen de la carpeta no se borran de la base (fuera del alcance de v1).
+
+**CLI** (`rag-ingest <ruta> --license <licencia>`, con `argparse`):
+
+- La licencia es obligatoria y se guarda en cada documento (ver `data/SOURCES.md`).
+- Muestra una línea por archivo y un resumen con los totales y el tiempo.
+- Códigos de salida: `0` si todo se procesó; `1` si hubo archivos con formato no soportado (RF-01),
+  si falló el proveedor de embeddings o si la base no responde; `2` por argumentos inválidos o si
+  falta `RAG_DATABASE_URL`.
+
 **Pregunta (RF-02, RF-03):** validar la pregunta → embedding de la pregunta → búsqueda por
 similitud de coseno (k = 5) → descartar resultados bajo el umbral → si no queda ninguno, responder
 "no encontré información" → construir el prompt con los fragmentos numerados → pedir al LLM que

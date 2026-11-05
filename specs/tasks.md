@@ -18,7 +18,7 @@ Cada tarea referencia el requisito que cumple. Marca `[x]` al terminar y haz un 
 - [x] `docker-compose.yml` con PostgreSQL + pgvector y migración inicial.
 - [x] Adaptador `VectorStore` (pgvector) con prueba de integración.
 - [x] Puerto `EmbeddingProvider` y adaptador Ollama.
-- [ ] CLI `rag-ingest <carpeta>` idempotente por hash.
+- [x] CLI `rag-ingest <carpeta>` idempotente por hash.
 
 ## M2 · Preguntas y citas (RF-02, RF-03)
 
