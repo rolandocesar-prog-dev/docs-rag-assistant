@@ -144,6 +144,29 @@ PDF escaneado), `Document` lanza `EmptyDocumentError` y la ingesta lo omite info
   completo (862 fragmentos) tarda ≈ 5,4 min, unos 2,7 fragmentos/s; embeber una pregunta tarda
   ≈ 40 ms. La ingesta es puntual y solo reprocesa documentos cambiados, así que la CPU alcanza.
 
+### Modelo de lenguaje local (RF-02, RF-03)
+
+Se compararon modelos de Ollama como generador, con 5 preguntas reales sobre el corpus (4 del
+tema y 1 fuera de él), 4 fragmentos de contexto y Ollama en Docker solo con CPU (2026-11-05):
+
+| Modelo          | Media  | Peor caso | Citas válidas | Rechaza fuera de tema | Bucles   |
+| --------------- | ------ | --------- | ------------- | --------------------- | -------- |
+| `qwen3.5:4b`    | 17,9 s | 21,8 s    | 4/4           | sí                    | 0        |
+| `granite4.2:3b` | 22,2 s | 39,6 s    | 4/4           | sí                    | 1        |
+| `gemma4:e4b`    | —      | —         | —             | —                     | no carga |
+
+- **Elegido: `qwen3.5:4b`** (Apache 2.0, 3,3 GB): respuestas breves en buen español, citas `[n]`
+  correctas y la frase exacta de «no encontré información». `granite4.2:3b` entró en bucle y no
+  respetaba el formato; `gemma4:e4b` (6,6 GB) no cabe en la memoria de Docker (≈ 7,3 GB) y la
+  agotó.
+- Parámetros del adaptador: `think: false`, `temperature` 0,1, `num_ctx` 8 192 y **tope de
+  `num_predict`** (400 tokens), para que un modelo en bucle nunca deje la respuesta colgada.
+- Latencia en CPU: ≈ 75 % del tiempo es leer el contexto (≈ 100 tokens/s) y luego genera
+  ≈ 15 tokens/s. Con 3 fragmentos en vez de 4 la media solo baja a 16,4 s: acortar el contexto
+  no resuelve la lentitud. RNF-01 (< 6 s) se cumple con un proveedor remoto (M3); el modelo local
+  es para desarrollo y uso sin costo.
+- En Docker conviene un solo modelo de lenguaje cargado a la vez, además de `bge-m3`.
+
 ### Cargadores (RF-01)
 
 Todos leen UTF-8 (con o sin BOM), unifican los fines de línea en `\n`, quitan espacios al final de
@@ -246,7 +269,7 @@ Respuesta de `/ask`:
 | Base vectorial              | PostgreSQL + pgvector        | Un solo servicio para datos y vectores, SQL conocido, fácil en Docker.    |
 | Framework web               | FastAPI                      | Tipado con Pydantic, OpenAPI automático, asíncrono.                       |
 | Orquestación RAG            | Código propio, sin LangChain | Muestra comprensión del flujo y evita una dependencia pesada.             |
-| Proveedor de modelo inicial | Ollama (local)               | Desarrollo sin costo; los demás proveedores entran por el mismo puerto.   |
+| Proveedor de modelo inicial | Ollama (local), `qwen3.5:4b` | Desarrollo sin costo; los demás proveedores entran por el mismo puerto.   |
 | Interfaz                    | HTML + JS sin framework      | El foco del proyecto es el backend de IA.                                 |
 | Corpus de demostración      | Kubernetes, «Conceptos» (ES) | Traducción humana revisada, CC BY 4.0 y temas que entiende cualquiera.    |
 | Modelo de embeddings        | `bge-m3` (Ollama), 1 024 dim | Multilingüe (100+ idiomas), entradas de hasta 8 192 tokens, licencia MIT. |
