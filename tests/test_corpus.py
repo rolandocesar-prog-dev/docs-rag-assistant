@@ -38,7 +38,7 @@ def test_only_section_indexes_can_be_empty() -> None:
     assert len(loaded) >= 70
 
 
-@pytest.mark.parametrize("leftover", ["{{<", "{{%", ">}}", "%}}", "<!--"])
+@pytest.mark.parametrize("leftover", ["{{<", "{{%", ">}}", "%}}", "<!--", "{#"])
 def test_no_markup_leftovers(leftover: str) -> None:
     loaded, _ = load_corpus()
 

@@ -156,7 +156,8 @@ cada línea y reducen las líneas en blanco consecutivas a una.
 | PDF      | `.pdf` (con `pypdf`) | Título de los metadatos o nombre del archivo        | Una por página |
 
 El Markdown conserva sus encabezados, que usa el divisor de fragmentos. Además, se quitan el bloque
-YAML inicial (`---`), los comentarios HTML y las etiquetas de Hugo (`{{< … >}}`, `{{% … %}}`):
+YAML inicial (`---`), los comentarios HTML, las anclas de los encabezados (`## Título {#id}`, para
+que no ensucien la sección citada) y las etiquetas de Hugo (`{{< … >}}`, `{{% … %}}`):
 
 | Etiqueta                                         | Se reemplaza por                                           |
 | ------------------------------------------------ | ---------------------------------------------------------- |

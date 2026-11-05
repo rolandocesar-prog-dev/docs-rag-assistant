@@ -70,6 +70,26 @@ def test_cleans_html_comments_hugo_tags_and_blank_lines(tmp_path: Path) -> None:
     assert text == "Un Pod agrupa contenedores.\n\nComparten red.\n\n## ¿Qué sigue?"
 
 
+def test_removes_heading_anchors_but_not_braces_elsewhere(tmp_path: Path) -> None:
+    content = (
+        "## Componentes del Clúster {#cluster-components}\n\n"
+        "### Recuperación {##pod-fault-recovery}  \n\n"
+        "#### Configuración {#configuración}\n\n"
+        "El texto {#no-es-ancla} queda igual.\n\n"
+        "```yaml\n# comentario {#tampoco}\n```"
+    )
+
+    text = LOADER.load(write(tmp_path, content), license="MIT").parts[0].text
+
+    assert text == (
+        "## Componentes del Clúster\n\n"
+        "### Recuperación\n\n"
+        "#### Configuración\n\n"
+        "El texto {#no-es-ancla} queda igual.\n\n"
+        "```yaml\n# comentario {#tampoco}\n```"
+    )
+
+
 def test_document_with_only_metadata_is_empty(tmp_path: Path) -> None:
     path = write(tmp_path, '---\ntitle: "Pods"\nweight: 10\n---\n<!-- body -->\n', "_index.md")
 

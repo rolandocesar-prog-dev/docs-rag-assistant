@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 from rag_assistant.domain.chunk import Chunk
 from rag_assistant.domain.document import Document
+from rag_assistant.domain.markdown import track_fence
 
 # ≈ 800 y 100 tokens, con unos 4 caracteres por token.
 DEFAULT_MAX_CHARS = 3200
@@ -13,7 +14,6 @@ DEFAULT_OVERLAP = 400
 
 _PARAGRAPH = "\n\n"
 _HEADING = re.compile(r"^(#{1,6})[ \t]+(.+?)[ \t#]*$")
-_FENCE = re.compile(r"^[ \t]*(`{3,}|~{3,})")
 # Para cortar un párrafo demasiado grande: primero por líneas, luego por palabras.
 _FALLBACK_SEPARATORS = ("\n", " ")
 
@@ -60,7 +60,7 @@ def _sections(text: str) -> Iterator[_Section]:
     fence: str | None = None
 
     for line in text.split("\n"):
-        fence, is_fence = _track_fence(line, fence)
+        fence, is_fence = track_fence(line, fence)
         heading = _HEADING.match(line) if fence is None and not is_fence else None
         if heading is None:
             lines.append(line)
@@ -76,17 +76,6 @@ def _sections(text: str) -> Iterator[_Section]:
 
     if has_body:
         yield _Section(path, "\n".join(lines).strip())
-
-
-def _track_fence(line: str, fence: str | None) -> tuple[str | None, bool]:
-    """Estado del bloque de código (```/~~~) después de `line`, y si `line` es una valla."""
-    match = _FENCE.match(line)
-    if match is None:
-        return fence, False
-    marker = match.group(1)
-    if fence is None:
-        return marker[0] * 3, True
-    return (None if marker.startswith(fence) else fence), True
 
 
 def _split_by_size(text: str, max_chars: int, overlap: int) -> list[str]:
@@ -113,7 +102,7 @@ def _blocks(text: str) -> list[str]:
     current: list[str] = []
     fence: str | None = None
     for line in text.split("\n"):
-        fence, _ = _track_fence(line, fence)
+        fence, _ = track_fence(line, fence)
         if not line.strip() and fence is None:
             if current:
                 blocks.append("\n".join(current))
