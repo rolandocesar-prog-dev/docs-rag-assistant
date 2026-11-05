@@ -1,8 +1,9 @@
-"""Integración con Ollama real y bge-m3 (solo si RAG_TEST_OLLAMA_URL está definida)."""
+"""Integración con Ollama real: bge-m3 y qwen3.5:4b (solo si RAG_TEST_OLLAMA_URL está definida)."""
 
 import math
 
 from rag_assistant.adapters.embeddings.ollama import OllamaEmbeddings
+from rag_assistant.adapters.llm.ollama import OllamaChat
 from rag_assistant.domain.retrieval import EMBEDDING_DIMENSIONS
 
 
@@ -24,3 +25,17 @@ def test_bge_m3_returns_vectors_that_capture_meaning_in_spanish(test_ollama_url:
 
     assert len(question) == EMBEDDING_DIMENSIONS
     assert cosine(question, related) > cosine(question, unrelated) + 0.1
+
+
+def test_qwen_answers_from_the_given_context_in_spanish(test_ollama_url: str) -> None:
+    chat = OllamaChat.from_url(test_ollama_url, model="qwen3.5:4b", max_tokens=120)
+
+    completion = chat.complete(
+        "Responde en español, en una frase, usando solo el contexto, y cita con [1].",
+        "Contexto:\n[1] Un Pod es la unidad de despliegue más pequeña de Kubernetes.\n\n"
+        "Pregunta: ¿Qué es un Pod?",
+    )
+
+    assert not completion.truncated
+    assert "[1]" in completion.text
+    assert "Pod" in completion.text

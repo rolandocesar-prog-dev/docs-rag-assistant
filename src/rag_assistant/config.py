@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     ollama_url: str = "http://127.0.0.1:11434"
     embedding_model: str = "bge-m3"
     embedding_batch_size: int = 32
+    llm_model: str = "qwen3.5:4b"
+    llm_max_tokens: int = 400
 
 
 @lru_cache

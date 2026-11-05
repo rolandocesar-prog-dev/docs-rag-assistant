@@ -4,11 +4,9 @@ from collections.abc import Sequence
 
 import httpx2
 
+from rag_assistant.adapters.ollama_http import new_client, post_json
 from rag_assistant.domain.errors import EmbeddingError
 from rag_assistant.domain.retrieval import EMBEDDING_DIMENSIONS
-
-# La primera llamada carga el modelo en memoria; en CPU puede tardar.
-DEFAULT_TIMEOUT_SECONDS = 300.0
 
 
 class OllamaEmbeddings:
@@ -29,8 +27,7 @@ class OllamaEmbeddings:
 
     @classmethod
     def from_url(cls, base_url: str, *, model: str, batch_size: int = 32) -> "OllamaEmbeddings":
-        client = httpx2.Client(base_url=base_url, timeout=DEFAULT_TIMEOUT_SECONDS)
-        return cls(client, model=model, batch_size=batch_size)
+        return cls(new_client(base_url), model=model, batch_size=batch_size)
 
     def embed(self, texts: Sequence[str]) -> list[tuple[float, ...]]:
         vectors: list[tuple[float, ...]] = []
@@ -39,22 +36,14 @@ class OllamaEmbeddings:
         return vectors
 
     def _embed_batch(self, batch: Sequence[str]) -> list[tuple[float, ...]]:
-        try:
-            response = self._client.post(
-                "/api/embed", json={"model": self._model, "input": list(batch)}
-            )
-        except httpx2.HTTPError as error:
-            raise EmbeddingError(
-                f"Ollama no responde en {self._client.base_url}: {error}"
-            ) from error
-        if response.status_code == httpx2.codes.NOT_FOUND:
-            raise EmbeddingError(
-                f"Ollama no tiene el modelo «{self._model}». Descárgalo con: "
-                f"docker compose exec ollama ollama pull {self._model}"
-            )
-        if response.is_error:
-            raise EmbeddingError(f"Ollama respondió {response.status_code}: {response.text[:200]}")
-        return self._parse(response.json(), expected=len(batch))
+        payload = post_json(
+            self._client,
+            "/api/embed",
+            {"model": self._model, "input": list(batch)},
+            model=self._model,
+            error=EmbeddingError,
+        )
+        return self._parse(payload, expected=len(batch))
 
     def _parse(self, payload: object, *, expected: int) -> list[tuple[float, ...]]:
         embeddings = payload.get("embeddings") if isinstance(payload, dict) else None

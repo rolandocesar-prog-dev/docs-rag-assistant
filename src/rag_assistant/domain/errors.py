@@ -7,6 +7,10 @@ class EmbeddingError(Exception):
     """El proveedor de embeddings falló o dio vectores inválidos (RF-04): detiene la ingesta."""
 
 
+class LLMError(Exception):
+    """El modelo de lenguaje no respondió o respondió algo inválido (RF-02, RF-04)."""
+
+
 class EmptyDocumentError(ValueError):
     """El documento no tiene texto tras la limpieza; la ingesta lo omite e informa."""
 

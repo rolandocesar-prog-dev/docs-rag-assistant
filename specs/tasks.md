@@ -22,9 +22,11 @@ Cada tarea referencia el requisito que cumple. Marca `[x]` al terminar y haz un 
 
 ## M2 · Preguntas y citas (RF-02, RF-03)
 
-- [ ] `AskService` con umbral de relevancia y respuesta "no encontré información".
-- [ ] Puerto `LLMProvider` y adaptador Ollama.
+Orden de abajo hacia arriba: `AskService` usa el LLM y el prompt, así que van antes.
+
+- [x] Puerto `LLMProvider` y adaptador Ollama (con tope de tokens).
 - [ ] Prompt con fragmentos numerados y validación de citas.
+- [ ] `AskService` con umbral de relevancia y respuesta "no encontré información".
 - [ ] Endpoint `POST /ask` con validación (422) y pruebas de contrato.
 
 ## M3 · Proveedores e interfaz (RF-04, RF-05)

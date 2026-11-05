@@ -182,6 +182,18 @@ tema y 1 fuera de él), 4 fragmentos de contexto y Ollama en Docker solo con CPU
   local; sin GPU, se cumple con un proveedor remoto (M3).
 - En Docker conviene un solo modelo de lenguaje cargado a la vez, además de `bge-m3`.
 
+**Puerto `LLMProvider`** (`ports/llm_provider.py`):
+
+- `complete(system, user) -> Completion`: una instrucción de sistema y un mensaje de usuario, el
+  mínimo común entre Ollama, las API compatibles con OpenAI y Anthropic (RF-04).
+- `Completion(text, truncated)` (dominio): `truncated` indica que la respuesta llegó al tope de
+  tokens; `AskService` lo trata como una respuesta no confiable.
+- `LLMError` (dominio): el proveedor no responde, no tiene el modelo o devuelve algo inválido.
+- Adaptador `OllamaChat`: `POST /api/chat` sin *streaming*, con los parámetros de arriba;
+  configuración `RAG_LLM_MODEL` (`qwen3.5:4b`) y `RAG_LLM_MAX_TOKENS` (400). Comparte con
+  `OllamaEmbeddings` el manejo de errores HTTP (`adapters/ollama_http.py`): sin respuesta, modelo
+  no descargado (404, con el comando para descargarlo) u otro error.
+
 ### Cargadores (RF-01)
 
 Todos leen UTF-8 (con o sin BOM), unifican los fines de línea en `\n`, quitan espacios al final de
