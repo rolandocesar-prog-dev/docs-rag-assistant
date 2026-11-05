@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from rag_assistant.adapters.loaders.markdown import MarkdownLoader
+from rag_assistant.domain.chunking import DEFAULT_MAX_CHARS, split_document
 from rag_assistant.domain.document import Document
 from rag_assistant.domain.errors import EmptyDocumentError
 
@@ -42,6 +43,16 @@ def test_no_markup_leftovers(leftover: str) -> None:
     loaded, _ = load_corpus()
 
     assert [doc.source_path for doc in loaded if leftover in doc.parts[0].text] == []
+
+
+def test_corpus_splits_into_chunks_within_the_default_limit() -> None:
+    loaded, _ = load_corpus()
+
+    chunks = [chunk for doc in loaded for chunk in split_document(doc)]
+
+    assert len(chunks) > len(loaded)
+    assert all(len(chunk.content) <= DEFAULT_MAX_CHARS for chunk in chunks)
+    assert sum(chunk.section is not None for chunk in chunks) / len(chunks) > 0.8
 
 
 def test_every_document_has_a_title() -> None:

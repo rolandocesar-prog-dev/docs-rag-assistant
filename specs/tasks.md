@@ -14,7 +14,7 @@ Cada tarea referencia el requisito que cumple. Marca `[x]` al terminar y haz un 
 - [x] Elegir el corpus de demostración y registrar sus licencias en `data/SOURCES.md`.
 - [x] Entidades `Document` y `Chunk` y el puerto `DocumentLoader`.
 - [x] Cargadores de Markdown y TXT con pruebas; PDF con `pypdf`.
-- [ ] Divisor de fragmentos por encabezado y tamaño, con pruebas de bordes.
+- [x] Divisor de fragmentos por encabezado y tamaño, con pruebas de bordes.
 - [ ] `docker-compose.yml` con PostgreSQL + pgvector y migración inicial.
 - [ ] Adaptador `VectorStore` (pgvector) con prueba de integración.
 - [ ] Puerto `EmbeddingProvider` y adaptador Ollama.

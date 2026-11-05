@@ -123,6 +123,23 @@ Las páginas de PDF sin texto se omiten; el número de página de las demás se 
 dividir por encabezados y luego por tamaño (≈ 800 tokens, solapamiento de 100) → generar
 embeddings por lotes → reemplazar los fragmentos del documento en una sola transacción.
 
+**División en fragmentos** (`domain/chunking.py`, lógica pura):
+
+1. Cada parte del documento se divide por separado, así un fragmento nunca mezcla páginas.
+2. Los encabezados de Markdown abren secciones; los `#` dentro de bloques de código no cuentan.
+   La sección del fragmento es la ruta de encabezados (`Service > Tipos de Service > ClusterIP`) y
+   es `None` para el texto anterior al primer encabezado. Una sección sin cuerpo no genera
+   fragmento, pero su título sigue en la ruta de sus subsecciones.
+3. Una sección que supera el tamaño máximo se reparte por párrafos (un bloque de código cuenta
+   como un párrafo). Un párrafo demasiado grande se corta por líneas, luego por palabras y, como
+   último recurso, por caracteres.
+4. Cada fragmento siguiente de la misma sección empieza con el final del anterior (solapamiento),
+   cortado en un límite de palabra. Ningún fragmento supera el máximo.
+
+El tamaño se mide en caracteres, porque aún no hay modelo de embeddings elegido: por defecto,
+3 200 de máximo y 400 de solapamiento (≈ 800 y 100 tokens, con unos 4 caracteres por token). Ambos
+son parámetros y se ajustarán al límite de entrada del modelo cuando se elija.
+
 **Pregunta (RF-02, RF-03):** validar la pregunta → embedding de la pregunta → búsqueda por
 similitud de coseno (k = 5) → descartar resultados bajo el umbral → si no queda ninguno, responder
 "no encontré información" → construir el prompt con los fragmentos numerados → pedir al LLM que
