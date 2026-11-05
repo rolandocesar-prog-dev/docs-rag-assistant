@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     embedding_batch_size: int = 32
     llm_model: str = "qwen3.5:4b"
     llm_max_tokens: int = 400
+    retrieval_k: int = 4
+    relevance_threshold: float = 0.45
 
 
 @lru_cache

@@ -291,6 +291,26 @@ validar que las citas existan → devolver la respuesta y las fuentes.
   - Si hay citas válidas y además el modelo agregó la frase de «no encontré información», esa
     frase se quita.
 
+**Caso de uso de pregunta** (`application/ask.py`, `AskService(embedder, store, llm)`):
+
+1. Valida la pregunta: sin espacios sobrantes, no vacía y de hasta 1 000 caracteres; si no,
+   `InvalidQuestionError` (dominio), que la API traduce a HTTP 422 (RF-02).
+2. Genera su embedding y busca los `k` fragmentos más similares (`RAG_RETRIEVAL_K`, 4).
+3. Descarta los que no alcanzan el umbral (`RAG_RELEVANCE_THRESHOLD`, 0,45: con el corpus, las
+   preguntas fuera de tema puntúan ≈ 0,3 y las del tema ≈ 0,6–0,7). Si no queda ninguno, responde
+   «no encontré información» **sin llamar al LLM** (RF-02), lo que además ahorra tiempo.
+4. Arma el prompt solo con los fragmentos relevantes, llama al LLM y valida las citas.
+5. Si la respuesta llegó al tope de tokens (`truncated`), lanza `LLMError`: suele ser un bucle y
+   no conviene mostrarla ni disfrazarla de «no encontré información», porque la información sí
+   podría estar.
+
+Comprobación del umbral con 10 preguntas reales (2026-11-05, GPU): las 6 del tema puntúan entre
+0,56 y 0,72 y se responden con citas en 2–3 s; las 3 fuera de tema («hola», un mundial de fútbol,
+la capital de Francia) puntúan 0,32–0,43 y se rechazan sin llamar al LLM. «¿Cómo instalo
+Kubernetes en Windows?» (0,65) pasa el umbral, pero el LLM responde que no está en los fragmentos:
+el umbral no tiene que ser perfecto, porque el prompt es una segunda barrera. Queda un fallo de
+recuperación conocido: «guardar una contraseña» no trae la página de Secrets (se medirá en RF-06).
+
 ## 5. API
 
 | Método | Ruta      | Descripción                               |

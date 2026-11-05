@@ -11,6 +11,10 @@ class LLMError(Exception):
     """El modelo de lenguaje no respondió o respondió algo inválido (RF-02, RF-04)."""
 
 
+class InvalidQuestionError(ValueError):
+    """Pregunta vacía o demasiado larga (RF-02: HTTP 422 en la API)."""
+
+
 class EmptyDocumentError(ValueError):
     """El documento no tiene texto tras la limpieza; la ingesta lo omite e informa."""
 

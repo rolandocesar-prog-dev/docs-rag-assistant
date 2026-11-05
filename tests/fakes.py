@@ -3,6 +3,7 @@
 import hashlib
 from collections.abc import Sequence
 
+from rag_assistant.domain.completion import Completion
 from rag_assistant.domain.document import Document
 from rag_assistant.domain.errors import EmbeddingError
 from rag_assistant.domain.retrieval import EMBEDDING_DIMENSIONS, EmbeddedChunk, RetrievedChunk
@@ -28,8 +29,12 @@ class FakeEmbedder:
 
 
 class InMemoryVectorStore:
-    def __init__(self) -> None:
+    """Guarda documentos en memoria; `search` devuelve los resultados que fije la prueba."""
+
+    def __init__(self, search_results: Sequence[RetrievedChunk] = ()) -> None:
         self.documents: dict[str, tuple[Document, list[EmbeddedChunk]]] = {}
+        self.search_results = list(search_results)
+        self.search_ks: list[int] = []
 
     def content_hash(self, source_path: str) -> str | None:
         stored = self.documents.get(source_path)
@@ -39,4 +44,17 @@ class InMemoryVectorStore:
         self.documents[document.source_path] = (document, list(chunks))
 
     def search(self, embedding: Sequence[float], *, k: int) -> list[RetrievedChunk]:
-        raise NotImplementedError
+        self.search_ks.append(k)
+        return self.search_results[:k]
+
+
+class FakeLLM:
+    """Devuelve una respuesta fija y guarda los mensajes que recibió."""
+
+    def __init__(self, completion: Completion) -> None:
+        self.completion = completion
+        self.calls: list[tuple[str, str]] = []
+
+    def complete(self, system: str, user: str) -> Completion:
+        self.calls.append((system, user))
+        return self.completion

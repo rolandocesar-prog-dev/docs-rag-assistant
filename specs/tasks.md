@@ -26,7 +26,7 @@ Orden de abajo hacia arriba: `AskService` usa el LLM y el prompt, así que van a
 
 - [x] Puerto `LLMProvider` y adaptador Ollama (con tope de tokens).
 - [x] Prompt con fragmentos numerados y validación de citas.
-- [ ] `AskService` con umbral de relevancia y respuesta "no encontré información".
+- [x] `AskService` con umbral de relevancia y respuesta "no encontré información".
 - [ ] Endpoint `POST /ask` con validación (422) y pruebas de contrato.
 
 ## M3 · Proveedores e interfaz (RF-04, RF-05)
