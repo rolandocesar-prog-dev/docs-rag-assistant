@@ -265,10 +265,31 @@ quedan muy por debajo del límite de `bge-m3` (8 192 tokens).
   falta `RAG_DATABASE_URL`.
 
 **Pregunta (RF-02, RF-03):** validar la pregunta → embedding de la pregunta → búsqueda por
-similitud de coseno (k = 5) → descartar resultados bajo el umbral → si no queda ninguno, responder
-"no encontré información" → construir el prompt con los fragmentos numerados → pedir al LLM que
-responda solo con ese contexto y cite con `[n]` → validar que las citas existan → devolver la
-respuesta y las fuentes.
+similitud de coseno (k = 4, el valor medido en la comparación de modelos) → descartar resultados
+bajo el umbral → si no queda ninguno, responder "no encontré información" → construir el prompt
+con los fragmentos numerados → pedir al LLM que responda solo con ese contexto y cite con `[n]` →
+validar que las citas existan → devolver la respuesta y las fuentes.
+
+**Prompt y citas** (`domain/prompting.py`, lógica pura):
+
+- La instrucción de sistema es la de la comparación de modelos: responder en español, en 2 a 5
+  frases, solo con los fragmentos numerados, citando cada afirmación con `[n]`, y si no está la
+  respuesta, decir exactamente «No encontré información sobre eso en la documentación.».
+- El mensaje de usuario numera los fragmentos desde 1: `[1] Documento: Pods`, en otra línea
+  `Sección: …` (si la hay) y luego el texto; termina con `Pregunta: …`.
+- `Answer(text, citations, found)` y `Citation(id, document, section, page, source_path, excerpt)`
+  son entidades del dominio. El extracto son los primeros ≈ 200 caracteres del fragmento, sin sus
+  encabezados ni las URL de los enlaces Markdown (queda su texto), cortado en un límite de palabra.
+- Validación de la respuesta del modelo:
+  - Se reconocen `[2]`, `[1][3]` y `[1, 3]`. Los números que no corresponden a un fragmento se
+    quitan del texto (y la marca entera, si no queda ninguno válido).
+  - Las fuentes son solo los fragmentos citados, en orden y sin repetir, con su número original
+    para que coincidan con las marcas del texto.
+  - Una respuesta **sin ninguna cita válida** no está fundamentada (RF-03): se devuelve «no
+    encontré información» con `found = false`, en vez de arriesgar una respuesta inventada (RF-02).
+    Esto cubre también el caso en que el modelo dice que no encontró la respuesta.
+  - Si hay citas válidas y además el modelo agregó la frase de «no encontré información», esa
+    frase se quita.
 
 ## 5. API
 
