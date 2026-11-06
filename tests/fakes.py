@@ -35,6 +35,7 @@ class InMemoryVectorStore:
         self.documents: dict[str, tuple[Document, list[EmbeddedChunk]]] = {}
         self.search_results = list(search_results)
         self.search_ks: list[int] = []
+        self.search_texts: list[str | None] = []
 
     def content_hash(self, source_path: str) -> str | None:
         stored = self.documents.get(source_path)
@@ -43,8 +44,11 @@ class InMemoryVectorStore:
     def replace_document(self, document: Document, chunks: Sequence[EmbeddedChunk]) -> None:
         self.documents[document.source_path] = (document, list(chunks))
 
-    def search(self, embedding: Sequence[float], *, k: int) -> list[RetrievedChunk]:
+    def search(
+        self, embedding: Sequence[float], *, k: int, text: str | None = None
+    ) -> list[RetrievedChunk]:
         self.search_ks.append(k)
+        self.search_texts.append(text)
         return self.search_results[:k]
 
 

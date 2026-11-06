@@ -136,6 +136,7 @@ class EvaluationService:
         *,
         k: int = DEFAULT_K,
         answer_k: int,
+        hybrid: bool = False,
         clock: Callable[[], float] = time.perf_counter,
         on_result: Callable[[ItemResult], None] | None = None,
     ) -> None:
@@ -145,6 +146,7 @@ class EvaluationService:
         self._judge = judge
         self._k = k
         self._answer_k = answer_k
+        self._hybrid = hybrid
         self._clock = clock
         self._on_result = on_result
 
@@ -160,7 +162,8 @@ class EvaluationService:
 
     def _evaluate(self, item: EvalItem) -> ItemResult:
         [vector] = self._embedder.embed([item.question])
-        retrieved = self._store.search(vector, k=self._k)
+        text = item.question if self._hybrid else None
+        retrieved = self._store.search(vector, k=self._k, text=text)
         doc_rank = first_relevant_rank(retrieved, item, by_section=False) if item.on_topic else None
         section_rank = (
             first_relevant_rank(retrieved, item, by_section=True) if item.on_topic else None

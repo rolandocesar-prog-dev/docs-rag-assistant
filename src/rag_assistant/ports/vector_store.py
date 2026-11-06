@@ -16,6 +16,11 @@ class VectorStore(Protocol):
         """Reemplaza la versión anterior del documento y sus fragmentos en una transacción."""
         ...
 
-    def search(self, embedding: Sequence[float], *, k: int) -> list[RetrievedChunk]:
-        """Los `k` fragmentos más similares, de mayor a menor `score`."""
+    def search(
+        self, embedding: Sequence[float], *, k: int, text: str | None = None
+    ) -> list[RetrievedChunk]:
+        """Los `k` fragmentos más relevantes. Con `text`, búsqueda híbrida (vector + texto).
+
+        `score` es siempre la similitud de coseno con `embedding`.
+        """
         ...

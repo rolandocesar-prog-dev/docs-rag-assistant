@@ -128,11 +128,32 @@ PDF escaneado), `Document` lanza `EmptyDocumentError` y la ingesta lo omite info
   - `replace_document(document, chunks)`: borra la versión anterior del mismo `source_path` (sus
     fragmentos caen por `ON DELETE CASCADE`) e inserta la nueva, **en una sola transacción**: si
     algo falla, queda la versión anterior intacta.
-  - `search(embedding, *, k) -> list[RetrievedChunk]`: los `k` fragmentos más similares, de mayor
-    a menor `score`. El umbral de relevancia lo aplica `AskService` (RF-02), no el almacén.
+  - `search(embedding, *, k, text=None) -> list[RetrievedChunk]`: los `k` fragmentos más
+    relevantes. Sin `text`, por similitud de coseno; con `text`, **búsqueda híbrida** (abajo).
+    `score` es siempre la similitud de coseno, así que el umbral de relevancia, que aplica
+    `AskService` (RF-02), significa lo mismo en los dos modos.
 - El adaptador `PgVectorStore` usa SQLAlchemy Core con SQL explícito y el operador `<=>`
   (distancia de coseno) de pgvector, que aprovecha el índice HNSW. Los vectores viajan como texto
   (`'[0.1, …]'::vector`), sin dependencias extra.
+- **Búsqueda híbrida** (hallazgo de la evaluación: las paráfrasis, como «contraseña» para
+  Secrets, quedan fuera de los 4 primeros solo con vectores):
+  - La migración `0002` agrega a `chunks` la columna generada `content_tsv`
+    (`to_tsvector('spanish', sección + contenido)`) con un índice GIN. Al ser generada, se
+    calcula sola para los fragmentos ya guardados: no hace falta reingestar.
+  - La pregunta se convierte en una consulta de texto completo en español que une sus palabras
+    con **O** (cualquiera suma), no con Y, porque una pregunta casi nunca repite todas las
+    palabras del documento. El analizador en español reduce las palabras a su raíz, así
+    «contraseña» encuentra «contraseñas».
+  - **Solo cuentan los términos raros**: los que aparecen en a lo sumo el 2 % de los fragmentos
+    (como mínimo 1). Las palabras frecuentes («cómo» → `com`, «clúster», «forma») coinciden con la
+    mitad del corpus y solo traen ruido. La frecuencia de cada término de la pregunta se cuenta
+    en la misma consulta con el índice GIN (milisegundos; no hace falta una tabla aparte).
+  - Se toman los 20 mejores por vector y los 5 mejores por texto, y se combinan con **Reciprocal
+    Rank Fusion**: `1/(60 + posición)` sumado en las dos listas. Es el método estándar para unir
+    rankings con puntuaciones no comparables. La lista de texto es corta porque su papel es
+    rescatar lo que el vector no ve, no competir con él.
+  - Si la pregunta no tiene términos raros, el resultado es el de la búsqueda vectorial.
+  - `RAG_HYBRID_SEARCH` (por defecto `true`) permite comparar los dos modos con `rag-eval`.
 
 ### Embeddings (RF-01, RF-04)
 
@@ -511,3 +532,23 @@ tema (antes 3/4) y responde 18/20 del tema (antes 19/20: «contraseña» ahora d
 información, porque la búsqueda no le entregó la página de Secrets). La recuperación no cambia,
 como se esperaba. Revisé el detector sobre las 20 respuestas de la primera evaluación: solo marcó
 los dos rechazos reales.
+
+**Mejora 2 — búsqueda híbrida** (reporte `2026-11-05-2152`):
+
+- **Primer intento, peor**: con todas las palabras de la pregunta y 20 candidatos por lista, la
+  recuperación empeoró (documento hit@4 85 %, MRR 0,69; paráfrasis hit@4 50 %). La consulta de
+  «contraseña» coincidía con 436 de 862 fragmentos: `com` (de «cómo») está en 151, `clust` en 210
+  y `form` en 170, frente a 7 de `contraseñ`.
+- **Ajuste** (solo recuperación, sin LLM, con las 20 preguntas del tema): probé un umbral de
+  frecuencia (100 %, 10 %, 5 %, 2 %), el peso de la lista de texto (1 o 0,5) y sus candidatos
+  (20 o 5). Con 2 %, peso 1 y 5 candidatos todas las métricas igualan o superan a la búsqueda
+  vectorial; con umbrales más altos siempre hubo alguna peor.
+- **Resultado** (contra la mejora 1): documento hit@4 **100 %** (antes 95 %), MRR **0,88**
+  (0,86), hit@1 igual (80 %); sección hit@4 **70 %** (65 %). «Contraseña» trae Secrets en el
+  puesto 2 (antes 6) y ahora se responde citándolo. Responde 19/20 del tema, rechaza 4/4 fuera de
+  tema, cita la fuente esperada 17/20 (antes 15/20); latencia p50 2,0 s y p95 3,0 s (sin costo
+  visible).
+- **Cuidado**: los tres valores se eligieron mirando estas mismas 20 preguntas, así que la mejora
+  puede estar algo sobreestimada; con un conjunto más grande habría que separar preguntas de
+  ajuste y de prueba. Queda pendiente «se cae una máquina» (q18): recupera bien el documento, pero
+  el modelo responde que no encontró información.

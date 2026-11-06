@@ -45,7 +45,7 @@ Orden de abajo hacia arriba: `AskService` usa el LLM y el prompt, así que van a
 Cada mejora se mide con `rag-eval` antes y después; el reporte nuevo queda en `eval/reports/`.
 
 - [x] Reconocer los rechazos que el modelo formula con sus propias palabras.
-- [ ] Búsqueda híbrida (vectorial + texto completo de PostgreSQL) para las paráfrasis.
+- [x] Búsqueda híbrida (vectorial + texto completo de PostgreSQL) para las paráfrasis.
 - [ ] Juez más capaz y configurable para medir fidelidad y corrección.
 
 ## M5 · Entrega

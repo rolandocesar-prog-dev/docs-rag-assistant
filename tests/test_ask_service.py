@@ -116,3 +116,13 @@ def test_rejects_invalid_configuration(k: int, threshold: float) -> None:
             k=k,
             threshold=threshold,
         )
+
+
+def test_hybrid_mode_sends_the_question_text_to_the_store() -> None:
+    store = InMemoryVectorStore(RESULTS)
+    llm = FakeLLM(Completion("Un Pod agrupa contenedores [1]."))
+
+    AskService(FakeEmbedder(), store, llm, hybrid=True).ask("  ¿Qué es un Pod?  ")
+    AskService(FakeEmbedder(), store, llm).ask("¿Qué es un Pod?")
+
+    assert store.search_texts == ["¿Qué es un Pod?", None]

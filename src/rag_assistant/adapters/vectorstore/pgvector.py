@@ -26,6 +26,61 @@ _SEARCH = text(
     "ORDER BY c.embedding <=> CAST(:embedding AS vector) "
     "LIMIT :k"
 )
+# Búsqueda híbrida (design.md): los mejores candidatos por vector y por texto completo en
+# español, unidos con Reciprocal Rank Fusion. La parte de texto solo usa los términos raros de
+# la pregunta (unidos con O): las palabras frecuentes («cómo», «clúster») traen ruido. La
+# frecuencia de cada término se cuenta con el índice GIN.
+_HYBRID_SEARCH = text(
+    """
+    WITH lexemes AS (
+        SELECT DISTINCT unnest(tsvector_to_array(to_tsvector('spanish', :text))) AS word
+    ),
+    rare AS (
+        SELECT string_agg(quote_literal(l.word), ' | ') AS terms
+        FROM lexemes l
+        WHERE (SELECT count(*) FROM chunks c
+               WHERE c.content_tsv @@ CAST(quote_literal(l.word) AS tsquery))
+              <= greatest(1, :rare_fraction * (SELECT count(*) FROM chunks))
+    ),
+    query AS (
+        SELECT CAST(:embedding AS vector) AS embedding, CAST(r.terms AS tsquery) AS terms
+        FROM rare r
+    ),
+    by_vector AS (
+        SELECT c.id, row_number() OVER (ORDER BY c.embedding <=> q.embedding) AS rank
+        FROM chunks c, query q
+        ORDER BY c.embedding <=> q.embedding
+        LIMIT :candidates
+    ),
+    by_text AS (
+        SELECT c.id, row_number() OVER (ORDER BY ts_rank_cd(c.content_tsv, q.terms) DESC) AS rank
+        FROM chunks c, query q
+        WHERE c.content_tsv @@ q.terms
+        ORDER BY ts_rank_cd(c.content_tsv, q.terms) DESC
+        LIMIT :text_candidates
+    ),
+    fused AS (
+        SELECT id, sum(1.0 / (:rrf_k + rank)) AS rrf
+        FROM (SELECT * FROM by_vector UNION ALL SELECT * FROM by_text) AS ranked
+        GROUP BY id
+    )
+    SELECT c.id, c.document_id, c.position, c.section, c.page, c.content,
+           d.title, d.source_path, 1 - (c.embedding <=> q.embedding) AS score
+    FROM fused f
+    JOIN chunks c ON c.id = f.id
+    JOIN documents d ON d.id = c.document_id
+    CROSS JOIN query q
+    ORDER BY f.rrf DESC, score DESC
+    LIMIT :k
+    """
+)
+# Candidatos de cada lista, constante de Reciprocal Rank Fusion (60 es el valor habitual) y
+# fracción máxima de fragmentos en que puede aparecer un término para usarlo en la parte de
+# texto. Valores medidos con `rag-eval` (design.md, sección 8).
+HYBRID_CANDIDATES = 20
+TEXT_CANDIDATES = 5
+RRF_K = 60
+RARE_TERM_FRACTION = 0.02
 
 
 class PgVectorStore:
@@ -70,11 +125,24 @@ class PgVectorStore:
                     ],
                 )
 
-    def search(self, embedding: Sequence[float], *, k: int) -> list[RetrievedChunk]:
+    def search(
+        self, embedding: Sequence[float], *, k: int, text: str | None = None
+    ) -> list[RetrievedChunk]:
         if k < 1:
             raise ValueError("k debe ser mayor o igual a 1.")
+        params: dict[str, object] = {"embedding": _to_vector(embedding), "k": k}
+        query = _SEARCH
+        if text is not None:
+            query = _HYBRID_SEARCH
+            params |= {
+                "text": text,
+                "candidates": max(k, HYBRID_CANDIDATES),
+                "text_candidates": TEXT_CANDIDATES,
+                "rrf_k": RRF_K,
+                "rare_fraction": RARE_TERM_FRACTION,
+            }
         with self._engine.connect() as connection:
-            rows = connection.execute(_SEARCH, {"embedding": _to_vector(embedding), "k": k})
+            rows = connection.execute(query, params)
             return [
                 RetrievedChunk(
                     chunk=Chunk(

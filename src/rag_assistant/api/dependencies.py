@@ -30,4 +30,5 @@ def get_ask_service() -> AskService:
         create_llm(settings),
         k=settings.retrieval_k,
         threshold=settings.relevance_threshold,
+        hybrid=settings.hybrid_search,
     )

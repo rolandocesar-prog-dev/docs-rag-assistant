@@ -33,7 +33,7 @@ class FailingEmbedder(FakeEmbedder):
 
 
 class UnreachableStore(InMemoryVectorStore):
-    def search(self, embedding: object, *, k: int) -> list[RetrievedChunk]:
+    def search(self, embedding: object, *, k: int, text: str | None = None) -> list[RetrievedChunk]:
         raise OperationalError("SELECT", {}, ConnectionRefusedError("conexión rechazada"))
 
 

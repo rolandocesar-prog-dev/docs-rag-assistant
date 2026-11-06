@@ -63,6 +63,10 @@ def test_upgrade_creates_tables_index_and_vector_column(migrated: Connection) ->
         text("SELECT indexdef FROM pg_indexes WHERE indexname = 'chunks_embedding_hnsw'")
     ).scalar_one()
     assert "hnsw" in index and "vector_cosine_ops" in index
+    text_index = migrated.execute(
+        text("SELECT indexdef FROM pg_indexes WHERE indexname = 'chunks_content_tsv_gin'")
+    ).scalar_one()
+    assert "gin" in text_index and "content_tsv" in text_index
 
 
 def test_schema_enforces_dimension_uniqueness_and_cascade(migrated: Connection) -> None:

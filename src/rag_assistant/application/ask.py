@@ -28,6 +28,7 @@ class AskService:
         *,
         k: int = DEFAULT_K,
         threshold: float = DEFAULT_RELEVANCE_THRESHOLD,
+        hybrid: bool = False,
     ) -> None:
         if k < 1:
             raise ValueError("k debe ser mayor o igual a 1.")
@@ -38,6 +39,7 @@ class AskService:
         self._llm = llm
         self._k = k
         self._threshold = threshold
+        self._hybrid = hybrid
 
     def ask(self, question: str) -> Answer:
         answer, _ = self.ask_with_context(question)
@@ -47,8 +49,11 @@ class AskService:
         """La respuesta y los fragmentos relevantes que recibió el LLM (los usa la evaluación)."""
         question = _validate(question)
         [vector] = self._embedder.embed([question])
+        text = question if self._hybrid else None
         relevant = [
-            item for item in self._store.search(vector, k=self._k) if item.score >= self._threshold
+            item
+            for item in self._store.search(vector, k=self._k, text=text)
+            if item.score >= self._threshold
         ]
         if not relevant:
             return not_found_answer(), []

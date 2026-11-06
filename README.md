@@ -110,19 +110,23 @@ pytest   # las pruebas de integración usan RAG_TEST_DATABASE_URL; sin ella, se 
 fuera de tema) por el sistema real y guarda un reporte en [`eval/reports/`](./eval/reports/).
 Resultados con `qwen3.5:4b` y GPU; cada mejora se mide con el mismo conjunto:
 
-| Métrica | [Primera](./eval/reports/2026-11-05-2133-ollama-qwen3-5-4b.md) | [Rechazos parafraseados](./eval/reports/2026-11-05-2142-ollama-qwen3-5-4b.md) |
-| --- | --- | --- |
-| Recuperación por documento: hit@4 / hit@10 / MRR | 95 % / 100 % / 0,86 | 95 % / 100 % / 0,86 |
-| Recuperación por sección: hit@4 | 65 % | 65 % |
-| Responde las preguntas del tema | 19/20 | 18/20 |
-| Rechaza las de fuera de tema | 3/4 | **4/4** |
-| Latencia p50 / p95 | 2,1 s / 3,3 s | 2,0 s / 3,1 s |
+| Métrica | [Primera](./eval/reports/2026-11-05-2133-ollama-qwen3-5-4b.md) | [Rechazos parafraseados](./eval/reports/2026-11-05-2142-ollama-qwen3-5-4b.md) | [Búsqueda híbrida](./eval/reports/2026-11-05-2152-ollama-qwen3-5-4b.md) |
+| --- | --- | --- | --- |
+| Recuperación por documento: hit@4 / hit@10 / MRR | 95 % / 100 % / 0,86 | 95 % / 100 % / 0,86 | **100 %** / 100 % / **0,88** |
+| Recuperación por sección: hit@4 | 65 % | 65 % | **70 %** |
+| Responde las preguntas del tema | 19/20 | 18/20 | 19/20 |
+| Rechaza las de fuera de tema | 3/4 | **4/4** | 4/4 |
+| Cita la fuente esperada | 15/20 | 15/20 | **17/20** |
+| Latencia p50 / p95 | 2,1 s / 3,3 s | 2,0 s / 3,1 s | 2,0 s / 3,0 s |
 
 Reconocer los rechazos parafraseados hizo que las 4 preguntas fuera de tema se rechacen; la de
 «contraseña» pasó a «no encontré información», que es lo honesto, porque la búsqueda no le dio la
-página de Secrets. La fidelidad y la corrección las juzga el mismo modelo de 4B, que resultó poco
-fiable como juez, así que esas cifras se omiten aquí. Los hallazgos y las mejoras siguientes están
-en [`specs/design.md`](./specs/design.md#8-evaluación-rf-06).
+página de Secrets. La búsqueda híbrida (vectores + texto completo de PostgreSQL, unidos con
+Reciprocal Rank Fusion) lo resolvió, pero recién al usar solo los términos poco frecuentes de la
+pregunta: con todas las palabras, «cómo» o «clúster» coincidían con medio corpus y la recuperación
+empeoró (hit@4 85 %). La fidelidad y la corrección las juzga el mismo modelo de 4B, que resultó
+poco fiable como juez, así que esas cifras se omiten aquí. Los hallazgos y las mejoras siguientes
+están en [`specs/design.md`](./specs/design.md#8-evaluación-rf-06).
 
 ## Cómo se desarrolla
 

@@ -48,7 +48,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     embedder = OllamaEmbeddings.from_url(settings.ollama_url, model=settings.embedding_model)
     store = PgVectorStore(engine)
     ask = AskService(
-        embedder, store, llm, k=settings.retrieval_k, threshold=settings.relevance_threshold
+        embedder,
+        store,
+        llm,
+        k=settings.retrieval_k,
+        threshold=settings.relevance_threshold,
+        hybrid=settings.hybrid_search,
     )
     service = EvaluationService(
         embedder,
@@ -57,6 +62,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         None if args.sin_juez else llm,
         k=args.k,
         answer_k=settings.retrieval_k,
+        hybrid=settings.hybrid_search,
         on_result=print_result,
     )
     try:

@@ -126,3 +126,16 @@ def test_latency_is_unknown_when_every_answer_failed() -> None:
     answers = service(llm).run([ON_TOPIC]).summary().answers
 
     assert (answers.errors, answers.latency_p50, answers.latency_p95) == (1, None, None)
+
+
+def test_hybrid_evaluation_searches_with_the_question_text() -> None:
+    store = InMemoryVectorStore([NODE, POD])
+    llm = ScriptedLLM(Completion(NOT_FOUND))
+    evaluation = EvaluationService(
+        FakeEmbedder(), store, AskService(FakeEmbedder(), store, llm, hybrid=True), None,
+        k=10, answer_k=4, hybrid=True,
+    )  # fmt: skip
+
+    evaluation.run([OFF_TOPIC])
+
+    assert store.search_texts == ["¿Capital de Francia?", "¿Capital de Francia?"]

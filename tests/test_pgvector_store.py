@@ -120,3 +120,51 @@ def test_search_on_an_empty_store_and_invalid_k(store: VectorStore) -> None:
     assert store.search(axis(0), k=5) == []
     with pytest.raises(ValueError, match="k"):
         store.search(axis(0), k=0)
+
+
+def test_hybrid_search_finds_words_the_vectors_miss(store: VectorStore) -> None:
+    secrets = make_document("Guardar contraseñas.", path="secret.md")
+    pods = make_document("Pods.", path="pods.md")
+    store.replace_document(
+        secrets,
+        [EmbeddedChunk(Chunk(secrets.id, 0, "Un Secret guarda contraseñas y tokens."), axis(5))],
+    )
+    store.replace_document(
+        pods, [EmbeddedChunk(Chunk(pods.id, 0, "Un Pod agrupa contenedores."), axis(0))]
+    )
+
+    by_vector = store.search(axis(0), k=1)
+    hybrid = store.search(axis(0), k=2, text="¿Dónde guardo una contraseña?")
+
+    assert [r.source_path for r in by_vector] == ["pods.md"]
+    assert "secret.md" in [r.source_path for r in hybrid]
+    secret = next(r for r in hybrid if r.source_path == "secret.md")
+    assert secret.score == pytest.approx(0.0)  # el score sigue siendo la similitud de coseno
+
+
+def test_hybrid_search_ignores_terms_present_in_many_fragments(store: VectorStore) -> None:
+    contents = {
+        "a.md": "Un Pod agrupa contenedores.",
+        "b.md": "Los contenedores comparten red.",
+        "c.md": "Contenedores y más contenedores.",  # el que más puntúa por texto
+    }
+    for index, (path, content) in enumerate(contents.items()):
+        document = make_document(content, path=path)
+        store.replace_document(
+            document, [EmbeddedChunk(Chunk(document.id, 0, content), axis(index))]
+        )
+    query = tuple(a + 0.5 * b for a, b in zip(axis(1), axis(0), strict=True))
+
+    results = store.search(query, k=3, text="¿Qué son los contenedores?")
+
+    # «contenedor» está en todos los fragmentos: no cuenta y manda el orden por vector.
+    assert [r.source_path for r in results] == ["b.md", "a.md", "c.md"]
+
+
+def test_hybrid_search_with_only_stopwords_falls_back_to_vectors(store: VectorStore) -> None:
+    document = make_document()
+    store.replace_document(document, embedded(document, 0, 1))
+
+    results = store.search(axis(1), k=2, text="¿y de la?")
+
+    assert [r.chunk.position for r in results] == [1, 0]
