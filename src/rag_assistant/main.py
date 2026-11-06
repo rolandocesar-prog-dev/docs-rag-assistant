@@ -11,6 +11,8 @@ from rag_assistant.adapters.llm.factory import validate_llm_settings
 from rag_assistant.api.ask import router as ask_router
 from rag_assistant.api.errors import register_error_handlers
 from rag_assistant.api.health import router as health_router
+from rag_assistant.api.web import mount_static
+from rag_assistant.api.web import router as web_router
 from rag_assistant.config import ConfigurationError, get_settings
 
 logger = logging.getLogger(__name__)
@@ -32,6 +34,8 @@ def create_app() -> FastAPI:
     app = FastAPI(title=settings.app_name, version=__version__, lifespan=lifespan)
     app.include_router(health_router)
     app.include_router(ask_router)
+    app.include_router(web_router)
+    mount_static(app)
     register_error_handlers(app)
     return app
 

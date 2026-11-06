@@ -385,6 +385,26 @@ El endpoint es síncrono (FastAPI lo ejecuta en su pool de hilos), porque los ad
 mediante `dependency_overrides`. La CLI y la API crean la conexión a la base con la misma función
 (`adapters/database.py`), con un tiempo de espera de 10 s.
 
+### Interfaz web de chat (RF-05)
+
+- `GET /` devuelve `web/index.html`; `web/app.js` y `web/styles.css` se sirven en `/static`. Sin
+  framework, sin dependencias externas ni CDN: todo sale del mismo servidor, así que no hace falta
+  CORS.
+- La pregunta va en un cuadro de texto con contador (máximo 1 000 caracteres, como la API); Enter
+  envía y Mayús+Enter agrega una línea.
+- Mientras espera la respuesta, la conversación muestra un indicador animado («Buscando en la
+  documentación…») y el botón queda desactivado para no enviar dos veces (RF-05).
+- La respuesta se muestra con sus marcas `[n]` convertidas en botones; debajo, cada cita es una
+  tarjeta desplegable (`<details>`) con documento, sección, página y extracto. Pulsar `[n]` abre y
+  resalta su tarjeta (RF-03).
+- `found: false` se muestra como aviso neutro; los errores (422, 502, 503) muestran el `detail`
+  de la API.
+- **Seguridad**: el texto de la API nunca se inserta como HTML (`textContent` y nodos creados con
+  `document.createElement`), así una respuesta del modelo no puede inyectar código. Una prueba
+  verifica que `app.js` no use `innerHTML`.
+- Accesible: etiquetas en los controles, `aria-live` en la conversación, foco visible y respeta
+  el modo claro u oscuro del sistema.
+
 ## 6. Decisiones
 
 | Decisión                    | Elección                     | Motivo                                                                    |

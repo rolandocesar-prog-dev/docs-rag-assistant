@@ -33,7 +33,7 @@ Orden de abajo hacia arriba: `AskService` usa el LLM y el prompt, así que van a
 
 - [x] Adaptadores compatibles con OpenAI y con Anthropic; selección por `RAG_LLM_PROVIDER`.
 - [x] Error explícito al iniciar si falta la clave del proveedor.
-- [ ] Página web de chat con indicador de carga y citas desplegables.
+- [x] Página web de chat con indicador de carga y citas desplegables.
 
 ## M4 · Evaluación (RF-06)
 

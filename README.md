@@ -42,10 +42,14 @@ ollama pull qwen3.5:4b            # modelo de lenguaje, una sola vez (3,3 GB)
 rag-ingest data/corpus/kubernetes/concepts --license CC-BY-4.0
 
 uvicorn rag_assistant.main:app --reload
-# http://localhost:8000/health  ·  documentación interactiva: http://localhost:8000/docs
+# Chat: http://localhost:8000/  ·  API: http://localhost:8000/docs  ·  salud: /health
 ```
 
 ## Preguntar
+
+En **http://localhost:8000/** hay una página de chat: muestra un indicador mientras busca y, debajo
+de cada respuesta, sus fuentes como tarjetas desplegables; las marcas `[n]` del texto abren la
+fuente correspondiente. También se puede usar la API directamente:
 
 ```bash
 curl -X POST http://localhost:8000/ask -H "Content-Type: application/json" \
