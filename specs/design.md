@@ -436,3 +436,25 @@ mediante `dependency_overrides`. La CLI y la API crean la conexión a la base co
 - **Integración:** adaptador pgvector contra PostgreSQL en Docker (servicio de CI).
 - **Contrato de API:** `TestClient` de FastAPI para cada endpoint.
 - **Calidad del RAG:** RF-06, con un reporte versionado en `eval/reports/`.
+
+## 8. Evaluación (RF-06)
+
+**Conjunto de preguntas** (`eval/dataset.jsonl`, una pregunta por línea, versionado):
+
+```json
+{"id": "q01", "category": "definicion", "question": "¿Qué es un Pod?",
+ "expected": [{"source_path": "concepts/workloads/pods/pod.md", "section": "¿Qué és un Pod?"}],
+ "reference": "Un Pod es un grupo de uno o más contenedores…"}
+```
+
+- `category`: `definicion`, `procedimiento`, `comparacion`, `parafrasis` (la pregunta usa palabras
+  distintas a las del documento, como «contraseña» para Secrets) o `fuera_de_tema`.
+- `expected`: los fragmentos que responden la pregunta, por documento y sección. La sección se
+  escribe como la ruta de encabezados que guarda el divisor (`null` es el texto anterior al primer
+  encabezado). En `fuera_de_tema` la lista está vacía y `reference` es `null`: la respuesta
+  correcta es «no encontré información».
+- `reference`: respuesta de referencia redactada a partir del texto del corpus, sin agregar nada
+  que no diga.
+- Al menos 20 preguntas del tema y algunas fuera de tema. Una prueba (sin base ni modelo) verifica
+  que el archivo sea válido y que cada documento y sección esperados existan en el corpus, así un
+  cambio del corpus o del divisor no deja el conjunto desactualizado sin avisar.

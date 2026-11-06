@@ -37,7 +37,7 @@ Orden de abajo hacia arriba: `AskService` usa el LLM y el prompt, así que van a
 
 ## M4 · Evaluación (RF-06)
 
-- [ ] 20+ preguntas de prueba en `eval/dataset.jsonl`.
+- [x] 20+ preguntas de prueba en `eval/dataset.jsonl`.
 - [ ] Comando `rag-eval` con hit rate@k, MRR y fidelidad; reporte en `eval/reports/`.
 
 ## M5 · Entrega
