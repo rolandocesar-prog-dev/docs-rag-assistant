@@ -23,22 +23,33 @@ Mypy · Docker · GitHub Actions
 
 ## Cómo ejecutarlo
 
+**Con Docker, en un solo comando.** Solo hace falta Ollama con los dos modelos descargados (con
+GPU conviene instalarlo en el equipo: https://ollama.com/download):
+
+```bash
+ollama pull bge-m3                # embeddings, una sola vez (1,2 GB)
+ollama pull qwen3.5:4b            # modelo de lenguaje, una sola vez (3,3 GB)
+cp .env.example .env              # y cambia la contraseña de la base
+docker compose up --build         # base, migraciones, ingesta del corpus y API
+# Chat: http://127.0.0.1:8000/  ·  API: http://127.0.0.1:8000/docs  ·  salud: /health
+```
+
+El servicio `init` aplica las migraciones e ingesta el corpus antes de que arranque la API. La
+primera vez la ingesta tarda ≈ 40 s con GPU (≈ 5 min en CPU); después solo procesa lo que cambió.
+Sin Ollama en el equipo, usa el de Docker: agrega `RAG_DOCKER_OLLAMA_URL=http://ollama:11434` al
+`.env`, levanta `docker compose --profile ollama up -d ollama` y descarga los modelos con
+`docker compose exec ollama ollama pull …`.
+
+**Para desarrollar**, la base en Docker y el resto en el equipo:
+
 ```bash
 python -m venv .venv
 # Windows: .venv\Scripts\activate   ·   Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
 cp .env.example .env              # y cambia la contraseña de la base
 
-docker compose up -d              # PostgreSQL + pgvector en 127.0.0.1:5442
+docker compose up -d db           # PostgreSQL + pgvector en 127.0.0.1:5442
 alembic upgrade head              # crea el esquema
-
-# Ollama en 127.0.0.1:11434. Con GPU, instálalo en el equipo (https://ollama.com/download);
-# si no, úsalo en Docker: docker compose --profile ollama up -d
-ollama pull bge-m3                # embeddings, una sola vez (1,2 GB)
-ollama pull qwen3.5:4b            # modelo de lenguaje, una sola vez (3,3 GB)
-# En Docker: docker compose exec ollama ollama pull bge-m3  (y lo mismo con qwen3.5:4b)
-
-# Ingesta del corpus (≈ 5 min la primera vez en CPU; después solo procesa lo que cambió)
 rag-ingest data/corpus/kubernetes/concepts --license CC-BY-4.0
 
 uvicorn rag_assistant.main:app --reload

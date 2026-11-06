@@ -50,3 +50,17 @@ jobs:
 
       - name: Pytest
         run: pytest
+
+  image:
+    name: Imagen Docker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Construir la imagen
+        run: docker build --tag rag-assistant:ci .
+
+      - name: La imagen arranca la app
+        run: >-
+          docker run --rm rag-assistant:ci
+          python -c "from rag_assistant.main import app; print(app.title)"

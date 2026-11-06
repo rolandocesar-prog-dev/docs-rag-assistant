@@ -97,6 +97,31 @@ La URL de conexión llega por `RAG_DATABASE_URL` (RNF-02).
   - En ambos casos los modelos se descargan una vez: `ollama pull bge-m3` (1,2 GB) y
     `ollama pull qwen3.5:4b` (3,3 GB); en Docker, anteponiendo `docker compose exec ollama`.
 
+### Todo con `docker compose up` (RNF-05)
+
+- **Imagen** (`Dockerfile`, dos etapas sobre `python:3.12-slim`, la versión del CI):
+  - *build*: construye la *wheel* del paquete e instala sus dependencias en un entorno virtual.
+  - *runtime*: copia ese entorno, `alembic.ini`, `migrations/` y `data/corpus/` (para ingestar sin
+    descargar nada). Corre con un usuario sin privilegios y sin las herramientas de compilación.
+  - `.dockerignore` deja fuera `.env`, `.venv`, las pruebas y las cachés: los secretos llegan solo
+    por variables de entorno (RNF-02).
+- **Servicios** de `docker-compose.yml`:
+  - `db`: el mismo de desarrollo.
+  - `init` (una sola vez por `up`): `alembic upgrade head` y `rag-ingest` del corpus. La ingesta
+    es incremental (solo reprocesa documentos cambiados), así que la segunda vez tarda < 1 s.
+  - `api`: `uvicorn` en el puerto 8000, publicado en `127.0.0.1:${RAG_API_PORT:-8000}`; arranca
+    cuando `db` está sano e `init` terminó bien. *Healthcheck* contra `/health`.
+  - `ollama`: sigue opcional (*profile*), porque con GPU conviene el instalado en el equipo.
+- **Conexiones dentro de Docker**: `init` y `api` leen la configuración del LLM de `.env`
+  (`env_file`), pero compose fija `RAG_DATABASE_URL` hacia `db:5432` y `RAG_OLLAMA_URL` hacia
+  `RAG_DOCKER_OLLAMA_URL` (por defecto `http://host.docker.internal:11434`, el Ollama del equipo;
+  con el *profile*, `http://ollama:11434`). En Linux, `host.docker.internal` se declara con
+  `extra_hosts: host-gateway`.
+- Requisito previo: los modelos de Ollama descargados. Si faltan, `init` falla con el mensaje que
+  ya da el adaptador (`ollama pull …`) y la `api` no arranca.
+- Las dependencias se instalan con las cotas de `pyproject.toml`, sin archivo de bloqueo: la
+  imagen puede traer versiones más nuevas que las probadas. Un *lock* queda como mejora futura.
+
 ### Entidades del dominio
 
 Son inmutables (`dataclass(frozen=True)`) y se validan al crearse, de modo que un objeto inválido

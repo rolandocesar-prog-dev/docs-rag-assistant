@@ -1,8 +1,24 @@
-# Servicios de desarrollo (specs/design.md, sección 3).
-# Uso: cp .env.example .env  →  docker compose up -d  →  alembic upgrade head
-# Ollama va aparte: instalado en el equipo (usa la GPU) o, si no, en Docker con el profile
-# `ollama`: docker compose --profile ollama up -d
-#           docker compose exec ollama ollama pull bge-m3   (y qwen3.5:4b; una sola vez)
+# Todo el proyecto (specs/design.md, «Todo con docker compose up»).
+# Uso: cp .env.example .env  →  docker compose up --build  →  http://127.0.0.1:8000
+#   - `init` aplica las migraciones e ingesta el corpus (incremental: la 2.ª vez tarda < 1 s).
+#   - Solo la base, para desarrollar fuera de Docker: docker compose up -d db
+# Ollama va aparte: instalado en el equipo (usa la GPU; es el valor por defecto) o, si no, en
+# Docker con el profile `ollama` y RAG_DOCKER_OLLAMA_URL=http://ollama:11434 en .env:
+#   docker compose --profile ollama up -d ollama
+#   docker compose exec ollama ollama pull bge-m3   (y qwen3.5:4b; una sola vez)
+x-app: &app
+  build: .
+  image: rag-assistant:local
+  env_file:
+    - path: .env
+      required: false
+  environment:
+    # Dentro de Docker la base es `db` y Ollama, el del equipo o el del profile.
+    RAG_DATABASE_URL: postgresql+psycopg://rag:${RAG_DB_PASSWORD:?Define RAG_DB_PASSWORD en .env}@db:5432/rag
+    RAG_OLLAMA_URL: ${RAG_DOCKER_OLLAMA_URL:-http://host.docker.internal:11434}
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+
 services:
   db:
     image: pgvector/pgvector:0.8.7-pg18
@@ -21,6 +37,37 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  init:
+    <<: *app
+    command:
+      - sh
+      - -c
+      - alembic upgrade head && rag-ingest data/corpus/kubernetes/concepts --license CC-BY-4.0
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    <<: *app
+    ports:
+      - "127.0.0.1:${RAG_API_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      init:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
   ollama:
     image: ollama/ollama:0.40.14

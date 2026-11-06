@@ -1,0 +1,19 @@
+# Solo entra a la imagen lo que copia el Dockerfile; nunca secretos ni entornos locales.
+.env
+.git
+.github
+.venv
+venv
+**/__pycache__
+*.py[cod]
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+htmlcov
+tests
+eval
+specs
+docker
+data/raw
+data/index
