@@ -53,6 +53,6 @@ Cada mejora se mide con `rag-eval` antes y después; el reporte nuevo queda en `
 
 - [x] `Dockerfile` de la API y `docker compose up` de punta a punta (RNF-05).
 - [x] Logs estructurados con id de petición (RNF-04).
-- [ ] Despliegue público o video de demostración.
-- [ ] README final con GIF, arquitectura y resultados de evaluación.
+- [x] Despliegue público o video de demostración (GIF grabado del chat real, en `docs/`).
+- [x] README final con GIF, arquitectura y resultados de evaluación.
 - [ ] Agregar el proyecto, con enlaces, a la sección Proyectos del CV.

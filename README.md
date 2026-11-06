@@ -3,18 +3,70 @@
 [![CI](https://github.com/rolandocesar-prog-dev/docs-rag-assistant/actions/workflows/ci.yml/badge.svg)](https://github.com/rolandocesar-prog-dev/docs-rag-assistant/actions/workflows/ci.yml)
 
 Asistente de preguntas y respuestas que responde **solo con información de un conjunto de
-documentos públicos** y **cita la fuente** de cada afirmación. Si la respuesta no está en los
-documentos, lo dice en lugar de inventarla.
+documentos públicos** (la documentación de Kubernetes en español) y **cita la fuente** de cada
+afirmación. Si la respuesta no está en los documentos, lo dice en lugar de inventarla.
 
-> 🚧 Proyecto en desarrollo. El avance está en [`specs/tasks.md`](./specs/tasks.md).
+![Demo: pregunta por una contraseña, respuesta que cita Secrets, fuente desplegada y rechazo de una pregunta fuera de tema](./docs/demo.gif)
+
+*Solo con vectores, la página de Secrets quedaba sexta para «contraseña»; la búsqueda híbrida la
+trae segunda. La pregunta sobre fútbol se rechaza sin llamar al modelo. Grabado con Ollama en una
+GPU local, con los tiempos reales de respuesta.*
+
+## Resultados
+
+Medidos con [`rag-eval`](#evaluación) sobre 24 preguntas propias (20 del tema y 4 fuera de tema):
+
+- **100 %** de las preguntas del tema trae el documento correcto entre los 4 fragmentos que ve el
+  modelo (MRR 0,88).
+- **19 de 20** preguntas del tema respondidas y **4 de 4** fuera de tema rechazadas.
+- **89 %** de las respuestas es fiel a los fragmentos citados y el **75 %** de las preguntas del
+  tema se responde correctamente, según un juez de 9B que validé contra una revisión manual.
+- Responde en ≈ **2 s** (p95 ≈ 3 s) con un modelo local de 4B en GPU.
 
 ## Qué demuestra
 
-- Recuperación aumentada por generación (RAG) implementada sin frameworks de orquestación.
-- Arquitectura hexagonal: el proveedor del modelo (local o en la nube) se cambia por configuración.
-- PostgreSQL + pgvector como base vectorial.
-- Evaluación automática de la calidad de las respuestas.
-- Tipado estricto, pruebas y CI desde el primer commit.
+- RAG implementado sin frameworks de orquestación: ingesta, fragmentación, búsqueda híbrida,
+  prompt con citas numeradas y validación de esas citas.
+- Arquitectura hexagonal: el modelo (Ollama local, Anthropic o cualquier API compatible con
+  OpenAI) se cambia por configuración.
+- PostgreSQL + pgvector como única base, para datos, vectores y texto completo.
+- **Mejoras guiadas por mediciones**, incluidas las que salieron mal (ver abajo).
+- Tipado estricto, 100 % de cobertura, CI con PostgreSQL real, Docker y logs JSON con id de
+  petición.
+
+## Arquitectura
+
+```mermaid
+flowchart LR
+    Q([Pregunta]) --> E[Embedding<br/>bge-m3]
+    E --> S[Búsqueda híbrida<br/>pgvector + texto completo<br/>Reciprocal Rank Fusion]
+    Q --> S
+    S --> U{¿Algún fragmento<br/>con similitud ≥ 0,45?}
+    U -- no --> N([«No encontré información»<br/>sin llamar al modelo])
+    U -- sí --> P[Prompt con los<br/>fragmentos numerados]
+    P --> L[Modelo de lenguaje<br/>Ollama · Anthropic · compatible con OpenAI]
+    L --> V[Valida las citas y<br/>detecta rechazos]
+    V --> R([Respuesta con citas])
+```
+
+- **Ingesta** (`rag-ingest`): Markdown, TXT o PDF → limpieza → fragmentos por encabezado →
+  embeddings → PostgreSQL. Solo reprocesa los documentos que cambiaron.
+- **Capas**: el dominio y los casos de uso no conocen FastAPI, la base ni el proveedor del modelo;
+  hablan con puertos (`VectorStore`, `EmbeddingProvider`, `LLMProvider`, `DocumentLoader`). Así
+  se prueban sin red y se cambia de proveedor sin tocar la lógica. Detalle en
+  [`specs/design.md`](./specs/design.md).
+
+## Lo que aprendí midiendo
+
+- **La búsqueda híbrida primero empeoró la recuperación** (de 95 % a 85 %): palabras como «cómo»
+  o «clúster» coincidían con medio corpus. Usar solo los términos poco frecuentes de la pregunta
+  la llevó a 100 %.
+- **La baja fidelidad era un defecto, no el modelo**: el juez recibía los fragmentos renumerados y
+  veía citas a fragmentos inexistentes. Corregirlo subió la fidelidad medida de 63 % a 95 %, con
+  el mismo juez.
+- **Un juez también se valida**: el de 4B erró 7 de 38 veredictos revisados a mano; el de 9B, 2.
+- Un modelo de 4B no es determinista: la misma pregunta se responde casi siempre, pero no siempre
+  (en una prueba, 6 de 7 veces).
 
 ## Stack
 
