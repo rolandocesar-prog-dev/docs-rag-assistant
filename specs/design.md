@@ -206,6 +206,11 @@ app (`adapters/llm/factory.py`); el resto del código solo conoce el puerto `LLM
 - `RAG_LLM_MODEL` y `RAG_LLM_MAX_TOKENS` son opcionales: si faltan, se usa el valor por defecto
   del proveedor. `RAG_LLM_API_KEY` es la clave de los proveedores remotos y `RAG_LLM_BASE_URL` la
   dirección del servicio compatible con OpenAI (por ejemplo `https://api.openai.com/v1`).
+- **Validación al arrancar (RF-04)**: `validate_llm_settings` revisa que el proveedor elegido
+  tenga lo que necesita (clave no vacía; en `openai_compatible`, además URL y modelo) sin crear
+  clientes ni conectarse. La API la ejecuta en su arranque (*lifespan* de FastAPI): si falta algo,
+  uvicorn se detiene con un mensaje que nombra la variable. La base de datos, en cambio, se valida
+  al usarla (503), para que `/health` responda aunque la base no esté configurada.
 - **Compatible con OpenAI**: `POST {base}/chat/completions` con `Authorization: Bearer`, mensajes
   `system` y `user`, `max_tokens` y `temperature` 0,1. Sirve para OpenAI y para cualquier servicio
   con la misma API (vLLM, LM Studio, el propio Ollama en `/v1`, etc.). `finish_reason: "length"`

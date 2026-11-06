@@ -10,7 +10,8 @@ from rag_assistant.config import get_settings
 config = context.config
 
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    # Sin esto, migrar dentro de un proceso (p. ej. las pruebas) silencia los loggers de la app.
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 
 def database_url() -> str:

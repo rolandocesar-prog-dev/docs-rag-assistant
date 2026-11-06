@@ -9,6 +9,15 @@ from rag_assistant.ports.llm_provider import LLMProvider
 DEFAULT_OLLAMA_MODEL = "qwen3.5:4b"
 
 
+def validate_llm_settings(settings: Settings) -> None:
+    """Revisa la configuración del proveedor elegido sin conectarse; lanza `ConfigurationError`."""
+    if settings.llm_provider == "ollama":
+        return
+    _required_api_key(settings)
+    if settings.llm_provider == "openai_compatible":
+        _openai_target(settings)
+
+
 def create_llm(settings: Settings) -> LLMProvider:
     """Lanza `ConfigurationError` si falta algo que el proveedor elegido necesita."""
     provider = settings.llm_provider
@@ -20,15 +29,11 @@ def create_llm(settings: Settings) -> LLMProvider:
         )
     api_key = _required_api_key(settings)
     if provider == "openai_compatible":
-        if not settings.llm_base_url or not settings.llm_model:
-            raise ConfigurationError(
-                "El proveedor openai_compatible necesita RAG_LLM_BASE_URL y RAG_LLM_MODEL "
-                "(por ejemplo, https://api.openai.com/v1 y el nombre del modelo)."
-            )
+        base_url, model = _openai_target(settings)
         return openai_compatible.OpenAICompatibleChat.from_url(
-            settings.llm_base_url,
+            base_url,
             api_key=api_key,
-            model=settings.llm_model,
+            model=model,
             max_tokens=settings.llm_max_tokens or openai_compatible.DEFAULT_MAX_TOKENS,
         )
     return anthropic_llm.AnthropicChat.from_api_key(
@@ -36,6 +41,15 @@ def create_llm(settings: Settings) -> LLMProvider:
         model=settings.llm_model or anthropic_llm.DEFAULT_MODEL,
         max_tokens=settings.llm_max_tokens or anthropic_llm.DEFAULT_MAX_TOKENS,
     )
+
+
+def _openai_target(settings: Settings) -> tuple[str, str]:
+    if not settings.llm_base_url or not settings.llm_model:
+        raise ConfigurationError(
+            "El proveedor openai_compatible necesita RAG_LLM_BASE_URL y RAG_LLM_MODEL "
+            "(por ejemplo, https://api.openai.com/v1 y el nombre del modelo)."
+        )
+    return settings.llm_base_url, settings.llm_model
 
 
 def _required_api_key(settings: Settings) -> str:
