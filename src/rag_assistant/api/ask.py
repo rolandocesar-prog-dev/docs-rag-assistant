@@ -1,5 +1,6 @@
 """Endpoint `POST /ask`: pregunta en lenguaje natural → respuesta con citas (RF-02, RF-03)."""
 
+import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
@@ -10,6 +11,7 @@ from rag_assistant.application.ask import MAX_QUESTION_CHARS, AskService
 from rag_assistant.domain.answer import Answer
 
 router = APIRouter(tags=["ask"])
+logger = logging.getLogger(__name__)
 
 
 class AskRequest(BaseModel):
@@ -54,4 +56,14 @@ def ask(
     request: AskRequest, service: Annotated[AskService, Depends(get_ask_service)]
 ) -> AskResponse:
     """Responde solo con la documentación ingestada; `found` es falso si no hay información."""
-    return AskResponse.from_answer(service.ask(request.question))
+    answer = service.ask(request.question)
+    # Sin el texto de la pregunta: puede traer datos personales (design.md, RNF-04).
+    logger.info(
+        "Pregunta respondida",
+        extra={
+            "found": answer.found,
+            "citations": len(answer.citations),
+            "question_chars": len(request.question),
+        },
+    )
+    return AskResponse.from_answer(answer)

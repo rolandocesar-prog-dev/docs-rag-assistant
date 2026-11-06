@@ -437,6 +437,29 @@ El endpoint es síncrono (FastAPI lo ejecuta en su pool de hilos), porque los ad
 mediante `dependency_overrides`. La CLI y la API crean la conexión a la base con la misma función
 (`adapters/database.py`), con un tiempo de espera de 10 s.
 
+### Logs estructurados e id de petición (RNF-04)
+
+- **Formato** (`rag_assistant/logs.py`, solo biblioteca estándar): una línea JSON por evento con
+  `time` (UTC, ISO 8601 con milisegundos), `level`, `logger`, `message`, `request_id` (dentro de
+  una petición), los campos extra del evento y `exception` si la hubo. `RAG_LOG_FORMAT=text` da
+  líneas legibles para desarrollo; `RAG_LOG_LEVEL` fija el nivel (`INFO`).
+- `configure_logging` instala un solo *handler* en el *logger* raíz (reemplaza el suyo si se llama
+  de nuevo y no toca los demás, como el de las pruebas) y hace que los *logs* de uvicorn salgan con
+  el mismo formato. Su registro de accesos se apaga: lo reemplaza el de la app.
+- **Id de petición** (*middleware* ASGI en `api/middleware.py`): se toma el encabezado
+  `X-Request-ID` del cliente si tiene de 1 a 64 caracteres `[A-Za-z0-9._-]` (así se puede seguir
+  una petición que viene de un proxy); si no, se genera `uuid4().hex`. Se devuelve en el
+  encabezado `X-Request-ID` de la respuesta y queda en un `ContextVar`, de modo que todos los
+  *logs* de esa petición lo llevan.
+- **Qué se registra**:
+  - una línea por petición (*logger* `rag_assistant.http`): `method`, `path`, `status` y
+    `duration_ms`. `/health` va en nivel `DEBUG` para que el *healthcheck* de Docker no llene los
+    *logs*;
+  - `/ask` (*logger* `rag_assistant.api.ask`): `found`, número de citas y largo de la pregunta.
+    **El texto de la pregunta no se registra**: puede traer datos personales;
+  - errores 502 y 503 en nivel `WARNING`, con el tipo de error; un error inesperado, con su traza
+    en nivel `ERROR` y estado 500.
+
 ### Interfaz web de chat (RF-05)
 
 - `GET /` devuelve `web/index.html`; `web/app.js` y `web/styles.css` se sirven en `/static`. Sin

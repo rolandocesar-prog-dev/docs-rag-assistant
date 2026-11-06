@@ -7,6 +7,7 @@ from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 LLMProviderName = Literal["ollama", "openai_compatible", "anthropic"]
+LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR"]
 
 
 class ConfigurationError(RuntimeError):
@@ -18,6 +19,9 @@ class Settings(BaseSettings):
 
     app_name: str = "RAG Assistant"
     environment: str = "development"
+    # Logs (RNF-04): JSON por defecto; `text` es más legible al desarrollar.
+    log_format: Literal["json", "text"] = "json"
+    log_level: LogLevel = "INFO"
     # Sin valor por defecto: las credenciales solo llegan por el entorno (RNF-02).
     database_url: str | None = None
     ollama_url: str = "http://127.0.0.1:11434"

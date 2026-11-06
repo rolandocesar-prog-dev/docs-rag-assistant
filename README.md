@@ -107,6 +107,19 @@ RAG_LLM_API_KEY=...
 
 Los embeddings siguen en Ollama con `bge-m3`, así que la base no hay que volver a ingestarla.
 
+## Logs
+
+La API escribe una línea JSON por evento, con el id de la petición: se toma del encabezado
+`X-Request-ID` si lo trae (por ejemplo, desde un proxy) o se genera, y vuelve en la respuesta.
+Así se siguen juntas la petición, las llamadas a Ollama y su resultado:
+
+```json
+{"time": "2026-11-06T04:13:37.390+00:00", "level": "INFO", "logger": "rag_assistant.http", "message": "Petición", "request_id": "demo-123", "method": "POST", "path": "/ask", "status": 200, "duration_ms": 1949.3}
+```
+
+El texto de las preguntas no se registra, solo su largo. `RAG_LOG_FORMAT=text` da líneas legibles
+para desarrollar.
+
 ## Calidad
 
 ```bash
