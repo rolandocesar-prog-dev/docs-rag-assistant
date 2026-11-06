@@ -21,6 +21,14 @@ _CITATION = re.compile(r"\[\s*(\d+(?:\s*,\s*\d+)*)\s*\]")
 _HEADING_LINE = re.compile(r"^#{1,6}[ \t].*$", re.MULTILINE)
 _MARKDOWN_LINK = re.compile(r"\[([^\]]+)\]\([^)]*\)")
 _NOT_FOUND_PHRASE = re.compile(re.escape(NOT_FOUND.rstrip(".")) + r"\.?", re.IGNORECASE)
+# Rechazo con otras palabras: la primera frase habla de las fuentes y niega que cubran el tema.
+_FIRST_SENTENCE = re.compile(r"^.*?(?:[.!?](?=\s|$)|\n|$)", re.DOTALL)
+_SOURCES = re.compile(r"\b(?:documentaci[oó]n|fragmentos?|contexto)\b", re.IGNORECASE)
+_NOT_COVERED = re.compile(
+    r"\bno\s+(?:se\s+)?(?:contienen?|incluyen?|mencionan?|proporcionan?|ofrecen?|describen?|"
+    r"explican?|tratan?|abordan?|encontr[eé])\b",
+    re.IGNORECASE,
+)
 
 
 def not_found_answer() -> Answer:
@@ -49,13 +57,20 @@ def parse_answer(text: str, retrieved: Sequence[RetrievedChunk]) -> Answer:
         return "".join(f"[{n}]" for n in valid)
 
     cleaned = _CITATION.sub(keep_valid, text)
-    if not cited:
+    if not cited or is_refusal(cleaned):
         return not_found_answer()
     cleaned = _NOT_FOUND_PHRASE.sub("", cleaned)
     cleaned = re.sub(r"[ \t]+([.,;:])", r"\1", cleaned)
     cleaned = re.sub(r"[ \t]{2,}", " ", cleaned).strip()
     citations = tuple(_citation(number, retrieved[number - 1]) for number in sorted(cited))
     return Answer(text=cleaned, citations=citations, found=True)
+
+
+def is_refusal(text: str) -> bool:
+    """La primera frase dice que las fuentes no cubren la pregunta (p. ej. «no contiene…»)."""
+    first = _FIRST_SENTENCE.match(text.strip())
+    sentence = first.group(0) if first else ""
+    return bool(_SOURCES.search(sentence) and _NOT_COVERED.search(sentence))
 
 
 def _citation(number: int, item: RetrievedChunk) -> Citation:

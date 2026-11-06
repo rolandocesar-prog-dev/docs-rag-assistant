@@ -122,3 +122,32 @@ def test_page_is_kept_for_paginated_sources() -> None:
 )
 def test_excerpt(content: str, expected: str) -> None:
     assert excerpt(content) == expected
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "La documentación proporcionada no contiene instrucciones sobre cómo instalar Python [4].",
+        "Los fragmentos no mencionan cómo guardar contraseñas; solo hablan de tokens [1].",
+        "El contexto no explica eso [2]. Sí describe los Pods [1].",
+        "No encontré información sobre eso en la documentación [1].",
+    ],
+    ids=["no-contiene", "no-mencionan", "no-explica", "no-encontre"],
+)
+def test_paraphrased_refusals_with_citations_become_not_found(text: str) -> None:
+    answer = parse_answer(text, CONTEXT)
+
+    assert (answer.found, answer.text, answer.citations) == (False, NOT_FOUND, ())
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Un ConfigMap no proporciona encriptación [1].",
+        "Un Pod agrupa contenedores [1]. La documentación no menciona su límite de tamaño.",
+        "Según la documentación, un Deployment gestiona réplicas [3].",
+    ],
+    ids=["negacion-sin-fuentes", "limite-en-segunda-frase", "afirmacion-sobre-fuentes"],
+)
+def test_answers_that_only_mention_limits_are_kept(text: str) -> None:
+    assert parse_answer(text, CONTEXT).found

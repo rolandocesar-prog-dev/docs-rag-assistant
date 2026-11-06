@@ -323,6 +323,12 @@ validar que las citas existan → devolver la respuesta y las fuentes.
     Esto cubre también el caso en que el modelo dice que no encontró la respuesta.
   - Si hay citas válidas y además el modelo agregó la frase de «no encontré información», esa
     frase se quita.
+  - **Rechazo con otras palabras** (hallazgo de la primera evaluación): si la **primera frase**
+    dice que la documentación, los fragmentos o el contexto no contienen, no mencionan o no
+    explican lo preguntado (p. ej. «La documentación proporcionada no contiene instrucciones
+    sobre…»), la respuesta es un rechazo aunque cite fragmentos, y se devuelve «no encontré
+    información». Solo se mira la primera frase para no descartar respuestas útiles que aclaran
+    un límite más adelante («…; la documentación no menciona X»).
 
 **Caso de uso de pregunta** (`application/ask.py`, `AskService(embedder, store, llm)`):
 
@@ -499,3 +505,9 @@ responde 19/20 preguntas del tema y rechaza 3/4 fuera de tema; latencia p50 2,1 
   cae una máquina» recupera bien el documento pero el modelo no responde. Es el caso para probar
   búsqueda híbrida (vectorial + palabras clave) o reordenamiento, y medirlo con este mismo
   conjunto.
+
+**Mejora 1 — rechazos parafraseados** (reporte `2026-11-05-2142`): rechaza 4/4 preguntas fuera de
+tema (antes 3/4) y responde 18/20 del tema (antes 19/20: «contraseña» ahora dice que no encontró
+información, porque la búsqueda no le entregó la página de Secrets). La recuperación no cambia,
+como se esperaba. Revisé el detector sobre las 20 respuestas de la primera evaluación: solo marcó
+los dos rechazos reales.

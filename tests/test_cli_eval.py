@@ -47,7 +47,7 @@ def test_writes_json_and_markdown_with_the_same_name(tmp_path: Path) -> None:
         "| Rechaza las de fuera de tema | 1/1 (100 %) |",
         "| Fidelidad (juez, sobre las respondidas) | 1/2 (50 %) |",
         "| q02 | parafrasis | ¿Contraseña? | no aparece | no aparece | sí | no | no | no | 3.0 s |",
-        "| q04 | definicion | ¿Nodo? | 4 | no aparece | error |",
+        "| q04 | definicion | ¿Nodo? | 4 | no aparece | error | no | — | no | 9.0 s |",
         "| q03 | fuera_de_tema | ¿Francia? | — | — | no encontró | — | — | — | 0.1 s |",
     ):
         assert expected in markdown

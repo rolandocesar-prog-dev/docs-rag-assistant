@@ -108,20 +108,21 @@ pytest   # las pruebas de integración usan RAG_TEST_DATABASE_URL; sin ella, se 
 
 `rag-eval` pasa las 24 preguntas de [`eval/dataset.jsonl`](./eval/dataset.jsonl) (20 del tema y 4
 fuera de tema) por el sistema real y guarda un reporte en [`eval/reports/`](./eval/reports/).
-Último resultado ([reporte](./eval/reports/2026-11-05-2133-ollama-qwen3-5-4b.md), `qwen3.5:4b`
-con GPU):
+Resultados con `qwen3.5:4b` y GPU; cada mejora se mide con el mismo conjunto:
 
-| Métrica | Resultado |
-| --- | --- |
-| Recuperación por documento: hit@4 / hit@10 / MRR | 95 % / 100 % / 0,86 |
-| Recuperación por sección: hit@4 | 65 % |
-| Responde las preguntas del tema | 19/20 |
-| Rechaza las de fuera de tema | 3/4 |
-| Latencia p50 / p95 | 2,1 s / 3,3 s |
+| Métrica | [Primera](./eval/reports/2026-11-05-2133-ollama-qwen3-5-4b.md) | [Rechazos parafraseados](./eval/reports/2026-11-05-2142-ollama-qwen3-5-4b.md) |
+| --- | --- | --- |
+| Recuperación por documento: hit@4 / hit@10 / MRR | 95 % / 100 % / 0,86 | 95 % / 100 % / 0,86 |
+| Recuperación por sección: hit@4 | 65 % | 65 % |
+| Responde las preguntas del tema | 19/20 | 18/20 |
+| Rechaza las de fuera de tema | 3/4 | **4/4** |
+| Latencia p50 / p95 | 2,1 s / 3,3 s | 2,0 s / 3,1 s |
 
-La fidelidad y la corrección las juzga el mismo modelo de 4B, que resultó poco fiable como juez:
-sus cifras (68 % y 60 %) son orientativas. Los hallazgos y las mejoras que sugieren están en
-[`specs/design.md`](./specs/design.md#8-evaluación-rf-06).
+Reconocer los rechazos parafraseados hizo que las 4 preguntas fuera de tema se rechacen; la de
+«contraseña» pasó a «no encontré información», que es lo honesto, porque la búsqueda no le dio la
+página de Secrets. La fidelidad y la corrección las juzga el mismo modelo de 4B, que resultó poco
+fiable como juez, así que esas cifras se omiten aquí. Los hallazgos y las mejoras siguientes están
+en [`specs/design.md`](./specs/design.md#8-evaluación-rf-06).
 
 ## Cómo se desarrolla
 

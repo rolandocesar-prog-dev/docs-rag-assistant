@@ -169,11 +169,13 @@ def render_markdown(report: EvalReport, *, label: str, when: datetime) -> str:
     for r in report.results:
         state = "error" if r.error else ("sí" if r.found else "no encontró")
         verdict = r.verdict
+        # Una pregunta del tema sin respuesta cuenta como incorrecta en el resumen.
+        correct = verdict.correct if verdict else (False if not r.found else None)
         lines.append(
             f"| {r.id} | {r.category} | {r.question} | {_rank(r.doc_rank, r.on_topic)} | "
             f"{_rank(r.section_rank, r.on_topic)} | {state} | {_yes(r.cites_expected, r.on_topic)} "
             f"| {_yes(verdict.faithful if verdict else None, r.found and report.judged)} "
-            f"| {_yes(verdict.correct if verdict else None, r.on_topic and report.judged)} "
+            f"| {_yes(correct, r.on_topic and report.judged)} "
             f"| {r.seconds:.1f} s |"
         )
     lines += [
