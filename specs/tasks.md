@@ -55,4 +55,4 @@ Cada mejora se mide con `rag-eval` antes y después; el reporte nuevo queda en `
 - [x] Logs estructurados con id de petición (RNF-04).
 - [x] Despliegue público o video de demostración (GIF grabado del chat real, en `docs/`).
 - [x] README final con GIF, arquitectura y resultados de evaluación.
-- [ ] Agregar el proyecto, con enlaces, a la sección Proyectos del CV.
+- [x] Agregar el proyecto, con enlaces, a la sección Proyectos del CV (web y PDF).
