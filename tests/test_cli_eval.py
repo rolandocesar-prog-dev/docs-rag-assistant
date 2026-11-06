@@ -32,16 +32,22 @@ def report(*, judged: bool = True) -> EvalReport:
 
 def test_writes_json_and_markdown_with_the_same_name(tmp_path: Path) -> None:
     json_path, md_path = cli.write_report(
-        report(), tmp_path / "reports", label="ollama/qwen3.5:4b", when=WHEN
+        report(),
+        tmp_path / "reports",
+        label="ollama/qwen3.5:4b",
+        judge="ollama/qwen3.5:9b",
+        when=WHEN,
     )
 
     assert json_path.name == "2026-11-06-1030-ollama-qwen3-5-4b.json"
     assert md_path.name == "2026-11-06-1030-ollama-qwen3-5-4b.md"
     data = json.loads(json_path.read_text(encoding="utf-8"))
-    assert (data["llm"], data["date"]) == ("ollama/qwen3.5:4b", "2026-11-06T10:30:00")
+    assert (data["llm"], data["judge"]) == ("ollama/qwen3.5:4b", "ollama/qwen3.5:9b")
+    assert data["date"] == "2026-11-06T10:30:00"
     assert data["summary"]["answers"]["errors"] == 1
     markdown = md_path.read_text(encoding="utf-8")
     for expected in (
+        "Modelo: `ollama/qwen3.5:4b` · Juez: `ollama/qwen3.5:9b`",
         "| Documento | 33 % | 67 % | 67 % | 0.42 |",
         "| Responde las preguntas del tema | 2/3 (67 %) |",
         "| Rechaza las de fuera de tema | 1/1 (100 %) |",
@@ -54,7 +60,9 @@ def test_writes_json_and_markdown_with_the_same_name(tmp_path: Path) -> None:
 
 
 def test_markdown_without_judge_omits_judge_metrics() -> None:
-    markdown = cli.render_markdown(report(judged=False), label="ollama/qwen3.5:4b", when=WHEN)
+    markdown = cli.render_markdown(
+        report(judged=False), label="ollama/qwen3.5:4b", judge=None, when=WHEN
+    )
 
     assert "Fidelidad" not in markdown
     assert "Juez: `sin juez`" in markdown
@@ -96,7 +104,16 @@ def test_usage_errors_return_exit_code_2(
     get_settings.cache_clear()
     assert cli.main(["--dataset", str(dataset)]) == cli.EXIT_USAGE
 
+    fresh_settings.setenv("RAG_LLM_PROVIDER", "ollama")
+    fresh_settings.setenv("RAG_JUDGE_PROVIDER", "anthropic")
+    get_settings.cache_clear()
+    assert cli.main(["--dataset", str(dataset)]) == cli.EXIT_USAGE
+    # Sin juez no se valida su configuración: el error pasa a ser la base de datos.
+    assert cli.main(["--dataset", str(dataset), "--sin-juez"]) == cli.EXIT_USAGE
+
     errors = capsys.readouterr().err
+    assert "RAG_JUDGE_API_KEY" in errors
+    assert errors.count("RAG_JUDGE_API_KEY") == 1
     assert "no-existe.jsonl" in errors
     assert "RAG_DATABASE_URL" in errors
     assert "RAG_LLM_API_KEY" in errors

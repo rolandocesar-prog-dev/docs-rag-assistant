@@ -12,7 +12,7 @@ from sqlalchemy.exc import OperationalError
 
 from rag_assistant.adapters.database import create_database_engine
 from rag_assistant.adapters.embeddings.ollama import OllamaEmbeddings
-from rag_assistant.adapters.llm.factory import create_llm, llm_label
+from rag_assistant.adapters.llm.factory import create_judge, create_llm, judge_label, llm_label
 from rag_assistant.adapters.vectorstore.pgvector import PgVectorStore
 from rag_assistant.application.ask import AskService
 from rag_assistant.application.evaluate import DEFAULT_K, EvalReport, EvaluationService, ItemResult
@@ -37,6 +37,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         items = parse_dataset(args.dataset.read_text(encoding="utf-8").splitlines())
         llm = create_llm(settings)
+        judge = None if args.sin_juez else create_judge(settings)
     except (OSError, ValueError, ConfigurationError) as error:
         print(f"No se puede evaluar: {error}", file=sys.stderr)
         return EXIT_USAGE
@@ -59,7 +60,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         embedder,
         store,
         ask,
-        None if args.sin_juez else llm,
+        judge,
         k=args.k,
         answer_k=settings.retrieval_k,
         hybrid=settings.hybrid_search,
@@ -73,8 +74,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     finally:
         engine.dispose()
 
-    label = llm_label(settings)
-    paths = write_report(report, args.salida, label=label, when=datetime.now())
+    paths = write_report(
+        report,
+        args.salida,
+        label=llm_label(settings),
+        judge=None if judge is None else judge_label(settings),
+        when=datetime.now(),
+    )
     print(f"\n{render_summary(report)}\nReporte: {paths[1]}")
     return EXIT_OK
 
@@ -86,15 +92,24 @@ def print_result(result: ItemResult) -> None:
 
 
 def write_report(
-    report: EvalReport, folder: Path, *, label: str, when: datetime
+    report: EvalReport, folder: Path, *, label: str, judge: str | None, when: datetime
 ) -> tuple[Path, Path]:
-    """Escribe `<fecha>-<modelo>.json` y `.md` en `folder` y devuelve sus rutas."""
+    """Escribe `<fecha>-<modelo>.json` y `.md` en `folder` y devuelve sus rutas.
+
+    `label` es el modelo que responde y `judge`, el que juzga (`None` sin juez).
+    """
     folder.mkdir(parents=True, exist_ok=True)
     stem = f"{when:%Y-%m-%d-%H%M}-{re.sub(r'[^a-zA-Z0-9]+', '-', label).strip('-')}"
     json_path, md_path = folder / f"{stem}.json", folder / f"{stem}.md"
-    data = {"date": when.isoformat(timespec="seconds"), "llm": label} | report.to_dict()
+    data = {
+        "date": when.isoformat(timespec="seconds"),
+        "llm": label,
+        "judge": judge,
+    } | report.to_dict()
     json_path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    md_path.write_text(render_markdown(report, label=label, when=when), encoding="utf-8")
+    md_path.write_text(
+        render_markdown(report, label=label, judge=judge, when=when), encoding="utf-8"
+    )
     return json_path, md_path
 
 
@@ -109,16 +124,16 @@ def render_summary(report: EvalReport) -> str:
     )
 
 
-def render_markdown(report: EvalReport, *, label: str, when: datetime) -> str:
+def render_markdown(report: EvalReport, *, label: str, judge: str | None, when: datetime) -> str:
     summary = report.summary()
     answers = summary.answers
     k, answer_k = report.k, report.answer_k
-    judge = label if report.judged else "sin juez"
+    judge_name = judge if report.judged and judge else "sin juez"
 
     lines = [
         f"# Evaluación del asistente — {when:%Y-%m-%d %H:%M}",
         "",
-        f"- Modelo: `{label}` · Juez: `{judge}` · Preguntas: {answers.on_topic} del tema y "
+        f"- Modelo: `{label}` · Juez: `{judge_name}` · Preguntas: {answers.on_topic} del tema y "
         f"{answers.off_topic} fuera de tema · Recuperación con k = {k}; respuestas con "
         f"k = {answer_k}.",
         "",

@@ -569,3 +569,27 @@ numeración corregida y el mismo juez de 4B, la fidelidad pasó de 12/19 (63 %) 
 y la corrección de 13/20 a 14/20; la recuperación y las respuestas no cambian (hit@4 100 %,
 19/20, 4/4). La fidelidad baja que se atribuía solo al tamaño del juez venía en buena parte de este
 defecto.
+
+**Mejora 3b — juez de 9B** (`RAG_JUDGE_PROVIDER=ollama`, `RAG_JUDGE_MODEL=qwen3.5:9b`, 6,6 GB;
+cabe en la GPU junto al modelo que responde y `bge-m3`):
+
+- **Validación**: generé las 19 respuestas una sola vez, las pasé por los dos jueces y revisé
+  cada veredicto a mano contra los fragmentos citados y la referencia (38 veredictos):
+
+  | Juez         | Coincide en fidelidad | Coincide en corrección | Veredictos errados |
+  | ------------ | --------------------- | ---------------------- | ------------------ |
+  | `qwen3.5:4b` | 16/19                 | 15/19                  | 7 de 38            |
+  | `qwen3.5:9b` | 17/19                 | 19/19                  | 2 de 38            |
+
+  El de 4B rechazaba respuestas correctas (namespace, TTL de Jobs, `rollout undo`, Secrets). Los
+  dos errores del de 9B son por indulgencia en fidelidad: aprobó afirmaciones que el fragmento no
+  dice («hay que especificar `hostIP`», «los datos de un volumen `secret` pueden perderse al
+  reiniciar»). Su fidelidad es, entonces, una cota superior.
+- **Reporte** `2026-11-05-2215` (responde `qwen3.5:4b`, juzga `qwen3.5:9b`): fidelidad 17/19
+  (89 %) y corrección 15/20 (75 %); recuperación y respuestas iguales a la mejora 2 (hit@4 100 %,
+  19/20, 4/4). Las respuestas incorrectas son de procedimiento y paráfrasis: hostPort en lugar de
+  NodePort, «varias copias» respondida con zonas de disponibilidad (en realidad un rechazo en la
+  segunda frase, que el detector no ve porque solo mira la primera) y volúmenes de StorageOS para
+  «datos que no se pierdan».
+- Sin `RAG_JUDGE_*`, el juez sigue siendo el mismo modelo que responde: así un proveedor remoto
+  más capaz se puede usar como juez sin tocar código.

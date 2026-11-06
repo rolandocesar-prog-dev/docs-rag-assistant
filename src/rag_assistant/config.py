@@ -29,6 +29,12 @@ class Settings(BaseSettings):
     llm_max_tokens: int | None = None
     llm_api_key: SecretStr | None = None
     llm_base_url: str | None = None
+    # Juez de `rag-eval` (RF-06): mismos campos que el LLM; sin proveedor, el juez es el LLM.
+    judge_provider: LLMProviderName | None = None
+    judge_model: str | None = None
+    judge_max_tokens: int | None = None
+    judge_api_key: SecretStr | None = None
+    judge_base_url: str | None = None
     retrieval_k: int = 4
     # Búsqueda híbrida (vector + texto completo en español); false = solo vector.
     hybrid_search: bool = True

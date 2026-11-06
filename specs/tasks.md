@@ -47,7 +47,7 @@ Cada mejora se mide con `rag-eval` antes y después; el reporte nuevo queda en `
 - [x] Reconocer los rechazos que el modelo formula con sus propias palabras.
 - [x] Búsqueda híbrida (vectorial + texto completo de PostgreSQL) para las paráfrasis.
 - [x] Juez: los fragmentos citados conservan el número `[n]` que usa la respuesta.
-- [ ] Juez configurable aparte (`RAG_JUDGE_*`) y validado contra una revisión manual.
+- [x] Juez configurable aparte (`RAG_JUDGE_*`) y validado contra una revisión manual.
 
 ## M5 · Entrega
 

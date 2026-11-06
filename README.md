@@ -124,9 +124,23 @@ Reconocer los rechazos parafraseados hizo que las 4 preguntas fuera de tema se r
 página de Secrets. La búsqueda híbrida (vectores + texto completo de PostgreSQL, unidos con
 Reciprocal Rank Fusion) lo resolvió, pero recién al usar solo los términos poco frecuentes de la
 pregunta: con todas las palabras, «cómo» o «clúster» coincidían con medio corpus y la recuperación
-empeoró (hit@4 85 %). La fidelidad y la corrección las juzga el mismo modelo de 4B, que resultó
-poco fiable como juez, así que esas cifras se omiten aquí. Los hallazgos y las mejoras siguientes
-están en [`specs/design.md`](./specs/design.md#8-evaluación-rf-06).
+empeoró (hit@4 85 %).
+
+**Fidelidad y corrección.** Las juzga otro modelo (`RAG_JUDGE_PROVIDER` y `RAG_JUDGE_MODEL`; sin
+ellas, el mismo que responde). Con `qwen3.5:9b` como juez, en el
+[último reporte](./eval/reports/2026-11-05-2215-ollama-qwen3-5-4b.md) el **89 %** de las
+respuestas es fiel a los fragmentos citados (17/19) y el **75 %** de las preguntas del tema se
+responde correctamente (15/20). Antes de usar esas cifras validé el juez contra una revisión
+manual de 38 veredictos: el de 9B acertó 36 y el de 4B, 31. El de 9B tiende a aprobar
+afirmaciones que el fragmento no respalda del todo, así que la fidelidad real puede ser algo
+menor.
+
+```bash
+RAG_JUDGE_PROVIDER=ollama RAG_JUDGE_MODEL=qwen3.5:9b rag-eval
+```
+
+Los hallazgos y las mejoras siguientes están en
+[`specs/design.md`](./specs/design.md#8-evaluación-rf-06).
 
 ## Cómo se desarrolla
 
