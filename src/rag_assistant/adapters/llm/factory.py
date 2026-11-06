@@ -43,6 +43,16 @@ def create_llm(settings: Settings) -> LLMProvider:
     )
 
 
+def llm_label(settings: Settings) -> str:
+    """Proveedor y modelo efectivos, p. ej. «ollama/qwen3.5:4b» (para reportes)."""
+    default = {
+        "ollama": DEFAULT_OLLAMA_MODEL,
+        "anthropic": anthropic_llm.DEFAULT_MODEL,
+        "openai_compatible": "?",
+    }[settings.llm_provider]
+    return f"{settings.llm_provider}/{settings.llm_model or default}"
+
+
 def _openai_target(settings: Settings) -> tuple[str, str]:
     if not settings.llm_base_url or not settings.llm_model:
         raise ConfigurationError(

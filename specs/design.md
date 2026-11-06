@@ -458,3 +458,44 @@ mediante `dependency_overrides`. La CLI y la API crean la conexión a la base co
 - Al menos 20 preguntas del tema y algunas fuera de tema. Una prueba (sin base ni modelo) verifica
   que el archivo sea válido y que cada documento y sección esperados existan en el corpus, así un
   cambio del corpus o del divisor no deja el conjunto desactualizado sin avisar.
+
+**Métricas** (`domain/evaluation.py`, lógica pura):
+
+- **Recuperación**, sobre las preguntas del tema, buscando los 10 fragmentos más similares sin
+  umbral: posición del primer fragmento relevante, *hit rate@1, @4 y @10* (¿aparece entre los
+  primeros k?) y **MRR@10** (media de 1/posición; 0 si no aparece). Se calcula a nivel de
+  **documento** (mismo `source_path`) y de **sección** (además, la misma sección), en total y
+  por categoría. @4 es el caso real: `AskService` usa k = 4.
+- **Respuestas**, pasando cada pregunta por `AskService` (umbral y prompt reales):
+  - tasa de respuesta en las preguntas del tema y **tasa de rechazo** en las de fuera de tema;
+  - **cita la fuente esperada**: la respuesta cita al menos un fragmento de un documento esperado;
+  - **fidelidad** y **corrección**, con un **LLM como juez**: recibe la pregunta, los fragmentos
+    citados, la respuesta y la referencia, y responde solo
+    `{"fiel": true|false, "correcta": true|false}`. *Fiel* = todo lo que afirma la respuesta está
+    en los fragmentos citados; *correcta* = coincide en lo esencial con la referencia. Un veredicto
+    ilegible cuenta como «sin veredicto», no como acierto;
+  - **latencia** p50 y p95 de cada respuesta completa (RNF-01).
+- Un error del modelo en una pregunta (por ejemplo, el tope de tokens) queda registrado en esa
+  pregunta y no detiene la evaluación.
+
+**CLI** `rag-eval [--k 10] [--sin-juez]`: usa la configuración de `.env` (la base ingestada y el
+proveedor de LLM elegido, que también hace de juez) y escribe en `eval/reports/` un JSON completo
+y un Markdown legible con el mismo nombre (fecha, hora y modelo). Los reportes se versionan: el
+último se cita en el README.
+
+**Primera evaluación** (2026-11-05, `ollama/qwen3.5:4b` con GPU, reporte en `eval/reports/`):
+recuperación por documento hit@4 95 %, hit@10 100 %, MRR 0,86 (por sección, hit@4 65 %);
+responde 19/20 preguntas del tema y rechaza 3/4 fuera de tema; latencia p50 2,1 s y p95 3,3 s
+(RNF-01 se cumple en local con GPU). Hallazgos, que guían las mejoras siguientes:
+
+- **El juez con el mismo modelo de 4B no es fiable**: marcó como infieles o incorrectas respuestas
+  que sí lo eran (por ejemplo, `kubectl rollout undo --to-revision` para revertir un Deployment).
+  Fidelidad (68 %) y corrección (60 %) son cotas inferiores ruidosas; para medirlas en serio, el
+  juez debe ser un modelo más capaz (se puede elegir otro proveedor por configuración).
+- **Rechazos con otras palabras**: en «instalar Python en Windows» y en «contraseña» el modelo
+  dijo que la documentación no lo cubre, pero con sus palabras y citando fragmentos, así que cuenta
+  como respuesta. Hay que reforzar la frase exacta en el prompt o reconocer esos rechazos.
+- **Paráfrasis**: «contraseña» trae la página de Secrets en el puesto 6 (fuera de k = 4), y «se
+  cae una máquina» recupera bien el documento pero el modelo no responde. Es el caso para probar
+  búsqueda híbrida (vectorial + palabras clave) o reordenamiento, y medirlo con este mismo
+  conjunto.

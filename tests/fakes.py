@@ -58,3 +58,18 @@ class FakeLLM:
     def complete(self, system: str, user: str) -> Completion:
         self.calls.append((system, user))
         return self.completion
+
+
+class ScriptedLLM:
+    """Devuelve las respuestas en orden; una excepción de la lista se lanza en su turno."""
+
+    def __init__(self, *replies: Completion | Exception) -> None:
+        self.replies = list(replies)
+        self.calls: list[tuple[str, str]] = []
+
+    def complete(self, system: str, user: str) -> Completion:
+        self.calls.append((system, user))
+        reply = self.replies.pop(0)
+        if isinstance(reply, Exception):
+            raise reply
+        return reply

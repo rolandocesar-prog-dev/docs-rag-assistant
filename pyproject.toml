@@ -24,6 +24,7 @@ dependencies = [
 
 [project.scripts]
 rag-ingest = "rag_assistant.cli.ingest:main"
+rag-eval = "rag_assistant.cli.evaluate:main"
 
 [project.optional-dependencies]
 dev = [
