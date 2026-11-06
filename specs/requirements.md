@@ -84,6 +84,8 @@ sobre ellos.
   esperada y la respuesta de referencia.
 - Un comando DEBE calcular métricas de recuperación (_hit rate@k_, MRR) y de fidelidad de la
   respuesta, y guardar el resultado en un reporte.
+- El modelo que juzga la fidelidad DEBE poder elegirse por configuración, aparte del que
+  responde; si no se elige, DEBE usarse el mismo.
 
 ## 5. Requisitos no funcionales
 

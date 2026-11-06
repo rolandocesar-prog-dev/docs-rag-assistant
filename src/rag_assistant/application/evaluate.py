@@ -182,7 +182,10 @@ class EvaluationService:
 
         verdict = None
         if self._judge is not None and item.on_topic and answer.found:
-            fragments = [context[citation.id - 1].chunk.content for citation in answer.citations]
+            fragments = [
+                (citation.id, context[citation.id - 1].chunk.content)
+                for citation in answer.citations
+            ]
             try:
                 judged = self._judge.complete(
                     JUDGE_SYSTEM_PROMPT, build_judge_prompt(item, answer, fragments)

@@ -73,7 +73,9 @@ def test_measures_retrieval_answers_and_judge() -> None:
     assert (off.doc_rank, off.found, off.verdict) == (None, False, None)
     assert notified == ["q01", "q02"]
     judge_prompt = llm.calls[1][1]
-    assert "[1] Un Pod agrupa contenedores." in judge_prompt  # el fragmento citado, completo
+    # El fragmento citado, completo y con el mismo número que usa la respuesta.
+    assert "[2] Un Pod agrupa contenedores." in judge_prompt
+    assert "[1]" not in judge_prompt
 
     summary = report.summary()
     assert summary.document.hit_at_1 == 0.0 and summary.document.hit_at_answer_k == 1.0

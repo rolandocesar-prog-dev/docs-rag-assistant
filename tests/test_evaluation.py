@@ -100,17 +100,21 @@ def test_cites_expected_source() -> None:
 
 
 def test_judge_prompt_includes_question_fragments_answer_and_reference() -> None:
-    answer = Answer("Un Pod agrupa contenedores [1].", (), found=True)
+    answer = Answer("Un Pod agrupa contenedores [2] en un nodo [4].", (), found=True)
 
-    prompt = build_judge_prompt(ITEM, answer, ["Un Pod es un grupo de contenedores."])
+    prompt = build_judge_prompt(
+        ITEM, answer, [(2, "Un Pod es un grupo de contenedores."), (4, "Un nodo es una máquina.")]
+    )
 
     for part in (
         "¿Qué es un Pod?",
-        "[1] Un Pod es un grupo",
-        "agrupa contenedores [1]",
+        "[2] Un Pod es un grupo",
+        "[4] Un nodo es una máquina.",
+        "agrupa contenedores [2]",
         "Un Pod agrupa contenedores.",
     ):
         assert part in prompt
+    assert "[1]" not in prompt
     assert "(ninguno)" in build_judge_prompt(ITEM, answer, [])
 
 

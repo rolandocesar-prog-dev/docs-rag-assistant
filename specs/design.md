@@ -500,15 +500,24 @@ mediante `dependency_overrides`. La CLI y la API crean la conexión a la base co
     citados, la respuesta y la referencia, y responde solo
     `{"fiel": true|false, "correcta": true|false}`. *Fiel* = todo lo que afirma la respuesta está
     en los fragmentos citados; *correcta* = coincide en lo esencial con la referencia. Un veredicto
-    ilegible cuenta como «sin veredicto», no como acierto;
+    ilegible cuenta como «sin veredicto», no como acierto. Cada fragmento citado llega al juez con
+    **el mismo número `[n]` que usa la respuesta**: si la respuesta cita `[2]` y `[4]`, el juez
+    ve `[2]` y `[4]`, no `[1]` y `[2]`;
   - **latencia** p50 y p95 de cada respuesta completa (RNF-01).
 - Un error del modelo en una pregunta (por ejemplo, el tope de tokens) queda registrado en esa
   pregunta y no detiene la evaluación.
 
 **CLI** `rag-eval [--k 10] [--sin-juez]`: usa la configuración de `.env` (la base ingestada y el
-proveedor de LLM elegido, que también hace de juez) y escribe en `eval/reports/` un JSON completo
-y un Markdown legible con el mismo nombre (fecha, hora y modelo). Los reportes se versionan: el
-último se cita en el README.
+proveedor de LLM elegido) y escribe en `eval/reports/` un JSON completo y un Markdown legible con
+el mismo nombre (fecha, hora y modelo). Los reportes se versionan: el último se cita en el
+README.
+
+**Juez configurable**: `RAG_JUDGE_PROVIDER`, `RAG_JUDGE_MODEL`, `RAG_JUDGE_MAX_TOKENS`,
+`RAG_JUDGE_API_KEY` y `RAG_JUDGE_BASE_URL` funcionan igual que sus pares `RAG_LLM_*` (mismos
+proveedores y valores por defecto). Sin `RAG_JUDGE_PROVIDER`, el juez es el mismo modelo que
+responde. La fábrica de LLM arma los dos a partir de una configuración común (`LLMConfig`), y los
+mensajes de error nombran la variable del grupo que falta. El reporte muestra los dos modelos.
+`rag-eval` valida la configuración del juez antes de empezar, salvo con `--sin-juez`.
 
 **Primera evaluación** (2026-11-05, `ollama/qwen3.5:4b` con GPU, reporte en `eval/reports/`):
 recuperación por documento hit@4 95 %, hit@10 100 %, MRR 0,86 (por sección, hit@4 65 %);
@@ -552,3 +561,11 @@ los dos rechazos reales.
   puede estar algo sobreestimada; con un conjunto más grande habría que separar preguntas de
   ajuste y de prueba. Queda pendiente «se cae una máquina» (q18): recupera bien el documento, pero
   el modelo responde que no encontró información.
+
+**Mejora 3a — numeración de los fragmentos del juez** (reporte `2026-11-05-2204`): el juez
+recibía los fragmentos citados renumerados desde `[1]`, mientras la respuesta conservaba sus
+números (por ejemplo `[2]` y `[4]`), así que veía citas a fragmentos inexistentes. Con la
+numeración corregida y el mismo juez de 4B, la fidelidad pasó de 12/19 (63 %) a **18/19 (95 %)**
+y la corrección de 13/20 a 14/20; la recuperación y las respuestas no cambian (hit@4 100 %,
+19/20, 4/4). La fidelidad baja que se atribuía solo al tamaño del juez venía en buena parte de este
+defecto.

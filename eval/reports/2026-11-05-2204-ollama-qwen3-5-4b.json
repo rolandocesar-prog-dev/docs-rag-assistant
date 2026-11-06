@@ -1,0 +1,461 @@
+{
+  "date": "2026-11-05T22:04:25",
+  "llm": "ollama/qwen3.5:4b",
+  "k": 10,
+  "answer_k": 4,
+  "judged": true,
+  "summary": {
+    "document": {
+      "n": 20,
+      "hit_at_1": 0.8,
+      "hit_at_answer_k": 1.0,
+      "hit_at_k": 1.0,
+      "mrr": 0.8791666666666667
+    },
+    "section": {
+      "n": 20,
+      "hit_at_1": 0.5,
+      "hit_at_answer_k": 0.7,
+      "hit_at_k": 0.85,
+      "mrr": 0.60375
+    },
+    "by_category": {
+      "comparacion": {
+        "n": 3,
+        "hit_at_1": 1.0,
+        "hit_at_answer_k": 1.0,
+        "hit_at_k": 1.0,
+        "mrr": 1.0
+      },
+      "definicion": {
+        "n": 8,
+        "hit_at_1": 0.75,
+        "hit_at_answer_k": 1.0,
+        "hit_at_k": 1.0,
+        "mrr": 0.8541666666666666
+      },
+      "parafrasis": {
+        "n": 4,
+        "hit_at_1": 0.75,
+        "hit_at_answer_k": 1.0,
+        "hit_at_k": 1.0,
+        "mrr": 0.875
+      },
+      "procedimiento": {
+        "n": 5,
+        "hit_at_1": 0.8,
+        "hit_at_answer_k": 1.0,
+        "hit_at_k": 1.0,
+        "mrr": 0.85
+      }
+    },
+    "answers": {
+      "on_topic": 20,
+      "answered": 19,
+      "off_topic": 4,
+      "rejected": 4,
+      "cites_expected": 17,
+      "faithful": 18,
+      "correct": 14,
+      "without_verdict": 0,
+      "errors": 0,
+      "latency_p50": 1.9185052500015445,
+      "latency_p95": 3.1176611999981105
+    }
+  },
+  "results": [
+    {
+      "id": "q01",
+      "category": "definicion",
+      "question": "¿Qué es un Pod?",
+      "on_topic": true,
+      "doc_rank": 1,
+      "section_rank": 1,
+      "found": true,
+      "cites_expected": true,
+      "verdict": {
+        "faithful": true,
+        "correct": true
+      },
+      "seconds": 2.4620224999998754,
+      "answer": "Un _Pod_ es un grupo de uno o más contenedores con almacenamiento y red compartidos que se ejecutan en un contexto compartido [1]. Modela un \"host lógico\" para aplicaciones entrelazadas, permitiendo la comunicación interna mediante direcciones IP y puertos comunes [1][3]. Es una unidad efímera de despliegue que gestiona automáticamente la colocación y los recursos compartidos [2].",
+      "error": null
+    },
+    {
+      "id": "q02",
+      "category": "definicion",
+      "question": "¿Para qué sirve un DaemonSet?",
+      "on_topic": true,
+      "doc_rank": 1,
+      "section_rank": 1,
+      "found": true,
+      "cites_expected": true,
+      "verdict": {
+        "faithful": true,
+        "correct": true
+      },
+      "seconds": 1.4395385999996506,
+      "answer": "Un DaemonSet garantiza que todos (o algunos) nodos del clúster ejecuten una copia de un Pod [1]. Se utiliza principalmente para procesos como almacenamiento, recolección de logs o monitorización que deben correr en cada nodo [1]. A diferencia de los Deployments, es crucial cuando se necesita asegurar que el Pod arranque antes que el resto y esté presente en todos los nodos [2].",
+      "error": null
+    },
+    {
+      "id": "q03",
+      "category": "definicion",
+      "question": "¿Qué es un namespace en Kubernetes?",
+      "on_topic": true,
+      "doc_rank": 1,
+      "section_rank": 1,
+      "found": true,
+      "cites_expected": true,
+      "verdict": {
+        "faithful": true,
+        "correct": false
+      },
+      "seconds": 1.8892099000004237,
+      "answer": "Un namespace es un clúster virtual que permite respaldar múltiples entornos dentro de un mismo clúster físico [1]. Estos espacios de nombres sirven para organizar los objetos de Kubernetes, aunque no todos los recursos (como nodos o volúmenes persistentes) están contenidos en ellos [4].",
+      "error": null
+    },
+    {
+      "id": "q04",
+      "category": "definicion",
+      "question": "¿Qué hace un CronJob?",
+      "on_topic": true,
+      "doc_rank": 1,
+      "section_rank": 1,
+      "found": true,
+      "cites_expected": true,
+      "verdict": {
+        "faithful": true,
+        "correct": true
+      },
+      "seconds": 1.8568964000005508,
+      "answer": "Un CronJob ejecuta tareas (Jobs) a intervalos regulares según un horario programado definido en formato [Cron] [1]. Funciona como una línea de un archivo crontab y es responsable únicamente de crear los Jobs que coinciden con su programación [2][3].",
+      "error": null
+    },
+    {
+      "id": "q05",
+      "category": "definicion",
+      "question": "¿Qué es un Ingress?",
+      "on_topic": true,
+      "doc_rank": 1,
+      "section_rank": 1,
+      "found": true,
+      "cites_expected": true,
+      "verdict": {
+        "faithful": true,
+        "correct": true
+      },
+      "seconds": 2.3339317999998457,
+      "answer": "Un Ingress expone rutas HTTP y HTTPS desde el exterior del clúster a los servicios internos mediante reglas de control de tráfico [1]. Su función principal es otorgar URLs accesibles externamente, realizar balanceo de carga, finalizar SSL/TLS y ofrecer alojamiento virtual basado en nombres [1]. Este recurso solo soporta reglas para dirigir tráfico HTTP(S) y no expone puertos arbitrarios sin usar tipos de servicio específicos [1][2].",
+      "error": null
+    },
+    {
+      "id": "q06",
+      "category": "definicion",
+      "question": "¿Qué son las etiquetas (labels) en Kubernetes?",
+      "on_topic": true,
+      "doc_rank": 3,
+      "section_rank": 8,
+      "found": true,
+      "cites_expected": true,
+      "verdict": {
+        "faithful": true,
+        "correct": true
+      },
+      "seconds": 2.2778488000003563,
+      "answer": "Las etiquetas permiten a los usuarios organizar sus recursos como deseen [2]. Son la primitiva principal de agrupación, ya que facilitan identificar conjuntos de objetos mediante selectores [3]. Además, ayudan a describir atributos semánticos de las aplicaciones para su gestión y selección por herramientas [4].",
+      "error": null
+    },
+    {
+      "id": "q07",
+      "category": "definicion",
+      "question": "¿Qué es un contenedor de inicialización?",
+      "on_topic": true,
+      "doc_rank": 1,
+      "section_rank": 4,
+      "found": true,
+      "cites_expected": true,
+      "verdict": {
+        "faithful": true,
+        "correct": true
+      },
+      "seconds": 1.9192399000021396,
+      "answer": "Un contenedor de inicialización es un contenedor especializado que se ejecuta antes de los contenedores de aplicación en un Pod [1]. Estos pueden contener utilidades o scripts de instalación no presentes en la imagen de aplicación y siempre deben completarse correctamente antes de iniciar el resto del Pod [4].",
+      "error": null
+    },
+    {
+      "id": "q08",
+      "category": "definicion",
+      "question": "¿Qué es un PersistentVolumeClaim?",
+      "on_topic": true,
+      "doc_rank": 2,
+      "section_rank": 3,
+      "found": true,
+      "cites_expected": true,
+      "verdict": {
+        "faithful": true,
+        "correct": true
+      },
+      "seconds": 2.1816661000011663,
+      "answer": "Un PersistentVolumeClaim (PVC) es una solicitud de almacenamiento realizada por un usuario para reclamar almacenamiento duradero sin conocer los detalles del entorno de la nube [1]. Funciona similar a un Pod, consumiendo recursos de PersistentVolumes en lugar de nodos, y permite especificar tamaños y modos de acceso como ReadWriteOnce [3]. Cada PVC contiene una especificación (spec) y un estado (status) que definen la solicitud de almacenamiento [2].",
+      "error": null
+    },
+    {
+      "id": "q09",
+      "category": "procedimiento",
+      "question": "¿Cómo limito la memoria que puede usar un contenedor?",
+      "on_topic": true,
+      "doc_rank": 1,
+      "section_rank": 1,
+      "found": true,
+      "cites_expected": true,
+      "verdict": {
+        "faithful": true,
+        "correct": true
+      },
+      "seconds": 2.9393819000033545,
+      "answer": "Para limitar la memoria, debes especificar el recurso `limit` en la configuración del contenedor, ya que Kubelet impone este límite y evita que el contenedor use más recursos [3]. Si no se define una petición (`request`), Kubernetes automáticamente asigna un valor igual al límite definido [1]. El Runtime ejecutará el proceso o terminará el mismo con un error de `out of memory` si intenta exceder ese límite [1].",
+      "error": null
+    },
+    {
+      "id": "q10",
+      "category": "procedimiento",
+      "question": "¿Cómo se borran automáticamente los Jobs que ya terminaron?",
+      "on_topic": true,
+      "doc_rank": 4,
+      "section_rank": 5,
+      "found": true,
+      "cites_expected": false,
+      "verdict": {
+        "faithful": true,
+        "correct": true
+      },
+      "seconds": 2.059217500001978,
+      "answer": "Los Jobs terminados pueden borrarse automáticamente mediante el controlador TTL, configurando el campo `.spec.ttlSecondsAfterFinished` para indicar cuántos segundos durará su retención [1]. También es posible limpiarlos indirectamente si se gestionan a través de CronJobs con reglas basadas en capacidad [2].",
+      "error": null
+    },
+    {
+      "id": "q11",
+      "category": "procedimiento",
+      "question": "¿Cómo publico un Service en el mismo puerto de cada nodo?",
+      "on_topic": true,
+      "doc_rank": 1,
+      "section_rank": 6,
+      "found": true,
+      "cites_expected": false,
+      "verdict": {
+        "faithful": true,
+        "correct": false
+      },
+      "seconds": 2.682566000003135,
+      "answer": "Para publicar un Service en el mismo puerto de cada nodo, debes especificar explícitamente una dirección IP y protocolo únicos para evitar colisiones [4]. La recomendación es usar un tipo de Service **NodePort** en lugar de `hostPort` cuando sea necesario exponer el puerto del Pod en el nodo [4].",
+      "error": null
+    },
+    {
+      "id": "q12",
+      "category": "procedimiento",
+      "question": "¿Cómo vuelvo a una versión anterior de un Deployment?",
+      "on_topic": true,
+      "doc_rank": 1,
+      "section_rank": 2,
+      "found": true,
+      "cites_expected": true,
+      "verdict": {
+        "faithful": true,
+        "correct": false
+      },
+      "seconds": 3.196234999999433,
+      "answer": "Para volver a una versión anterior, puedes usar el comando `kubectl rollout undo` seguido del nombre del despliegue [3]. También es posible especificar una revisión concreta con la opción `--to-revision` [3]. Este proceso genera un evento `DeploymentRollback` para confirmar que se ha revertido correctamente [3].",
+      "error": null
+    },
+    {
+      "id": "q13",
+      "category": "procedimiento",
+      "question": "¿Cómo restrinjo qué Pods pueden comunicarse entre sí?",
+      "on_topic": true,
+      "doc_rank": 1,
+      "section_rank": 1,
+      "found": true,
+      "cites_expected": true,
+      "verdict": {
+        "faithful": true,
+        "correct": true
+      },
+      "seconds": 2.90204189999713,
+      "answer": "Para restringir la comunicación entre Pods, debes definir una NetworkPolicy que especifique qué tráfico es permitido o bloqueado [1]. Estas políticas aplican restricciones tanto para conexiones entrantes como salientes de forma independiente y aditiva [4]. La conexión solo se permitirá si tanto la política de salida del Pod origen como la de entrada del Pod destino autorizan el tráfico [4].",
+      "error": null
+    },
+    {
+      "id": "q14",
+      "category": "comparacion",
+      "question": "¿Qué diferencia hay entre un Deployment y un StatefulSet?",
+      "on_topic": true,
+      "doc_rank": 1,
+      "section_rank": 2,
+      "found": true,
+      "cites_expected": true,
+      "verdict": {
+        "faithful": true,
+        "correct": true
+      },
+      "seconds": 1.6317204000006313,
+      "answer": "Un StatefulSet gestiona aplicaciones con estado mediante identificados de red únicos, almacenamiento persistente y despliegue ordenado, mientras que un Deployment se usa para cargas de trabajo sin estado. Los StatefulSets garantizan la persistencia entre (re)programaciones de Pods, algo que los Deployments no ofrecen por defecto [2].",
+      "error": null
+    },
+    {
+      "id": "q15",
+      "category": "comparacion",
+      "question": "¿En qué se diferencia un ConfigMap de un Secret?",
+      "on_topic": true,
+      "doc_rank": 1,
+      "section_rank": 1,
+      "found": true,
+      "cites_expected": true,
+      "verdict": {
+        "faithful": true,
+        "correct": true
+      },
+      "seconds": 1.795970600000146,
+      "answer": "Un ConfigMap no proporciona encriptación para datos confidenciales [1]. Si los datos son sensibles, se debe utilizar un Secret en su lugar o herramientas externas para garantizar la seguridad [1].",
+      "error": null
+    },
+    {
+      "id": "q16",
+      "category": "comparacion",
+      "question": "¿Qué diferencia hay entre un ReplicaSet y un ReplicationController?",
+      "on_topic": true,
+      "doc_rank": 1,
+      "section_rank": 1,
+      "found": true,
+      "cites_expected": true,
+      "verdict": {
+        "faithful": true,
+        "correct": true
+      },
+      "seconds": 1.6785794000024907,
+      "answer": "La principal diferencia es que el ReplicaSet soporta requisitos basados en conjuntos (set-based requirements), mientras que el ReplicationController no [1]. Además, el ReplicaSet es la versión de nueva generación diseñada para orquestar la creación y actualización de pods [2]. Por ello, se prefiere utilizar ReplicaSets sobre ReplicationControllers debido a esta mayor funcionalidad [1].",
+      "error": null
+    },
+    {
+      "id": "q17",
+      "category": "parafrasis",
+      "question": "¿Cómo guardo una contraseña de forma segura en el clúster?",
+      "on_topic": true,
+      "doc_rank": 2,
+      "section_rank": null,
+      "found": true,
+      "cites_expected": true,
+      "verdict": {
+        "faithful": true,
+        "correct": true
+      },
+      "seconds": 1.9177706000009493,
+      "answer": "Para guardar una contraseña de forma segura, puedes crear un objeto `Secret` usando `kubectl create secret` con archivos que contengan la información sensible [2]. Además, puedes montar ese Secret como un volumen dentro de un Pod para pasarle la contraseña sin exponerla en el código del contenedor [4].",
+      "error": null
+    },
+    {
+      "id": "q18",
+      "category": "parafrasis",
+      "question": "¿Qué pasa con mis aplicaciones si se cae una de las máquinas del clúster?",
+      "on_topic": true,
+      "doc_rank": 1,
+      "section_rank": 1,
+      "found": false,
+      "cites_expected": false,
+      "verdict": null,
+      "seconds": 1.4036085000007006,
+      "answer": "No encontré información sobre eso en la documentación.",
+      "error": null
+    },
+    {
+      "id": "q19",
+      "category": "parafrasis",
+      "question": "¿Cómo reparto el tráfico entre varias copias de mi aplicación?",
+      "on_topic": true,
+      "doc_rank": 1,
+      "section_rank": null,
+      "found": true,
+      "cites_expected": true,
+      "verdict": {
+        "faithful": false,
+        "correct": false
+      },
+      "seconds": 1.1003213000003598,
+      "answer": "Para distribuir el tráfico entre dominios de falla, las técnicas varían según el proveedor de la nube y se recomienda revisar la documentación específica del controlador Ingress [1]. La documentación proporcionada no describe métodos para repartir tráfico entre copias de una misma aplicación.",
+      "error": null
+    },
+    {
+      "id": "q20",
+      "category": "parafrasis",
+      "question": "¿Dónde guardo datos que no se pierdan cuando se reinicia un contenedor?",
+      "on_topic": true,
+      "doc_rank": 1,
+      "section_rank": null,
+      "found": true,
+      "cites_expected": true,
+      "verdict": {
+        "faithful": true,
+        "correct": false
+      },
+      "seconds": 2.674019500002032,
+      "answer": "Los volúmenes `storageos` permiten montar volúmenes existentes y replicar los datos para protegerlos contra fallos del nodo [1]. Los volúmenes `secret` usan tmpfs en la RAM, por lo que nunca se escriben en almacenamiento no volátil y los datos se pierden al reiniciar [4].",
+      "error": null
+    },
+    {
+      "id": "q21",
+      "category": "fuera_de_tema",
+      "question": "¿Cuál es la capital de Francia?",
+      "on_topic": false,
+      "doc_rank": null,
+      "section_rank": null,
+      "found": false,
+      "cites_expected": false,
+      "verdict": null,
+      "seconds": 0.02652719999969122,
+      "answer": "No encontré información sobre eso en la documentación.",
+      "error": null
+    },
+    {
+      "id": "q22",
+      "category": "fuera_de_tema",
+      "question": "¿Cómo se prepara un pan casero?",
+      "on_topic": false,
+      "doc_rank": null,
+      "section_rank": null,
+      "found": false,
+      "cites_expected": false,
+      "verdict": null,
+      "seconds": 0.028241399999387795,
+      "answer": "No encontré información sobre eso en la documentación.",
+      "error": null
+    },
+    {
+      "id": "q23",
+      "category": "fuera_de_tema",
+      "question": "¿Quién ganó el último mundial de fútbol?",
+      "on_topic": false,
+      "doc_rank": null,
+      "section_rank": null,
+      "found": false,
+      "cites_expected": false,
+      "verdict": null,
+      "seconds": 0.02785560000120313,
+      "answer": "No encontré información sobre eso en la documentación.",
+      "error": null
+    },
+    {
+      "id": "q24",
+      "category": "fuera_de_tema",
+      "question": "¿Cómo instalo Python en Windows?",
+      "on_topic": false,
+      "doc_rank": null,
+      "section_rank": null,
+      "found": false,
+      "cites_expected": false,
+      "verdict": null,
+      "seconds": 3.1176611999981105,
+      "answer": "No encontré información sobre eso en la documentación.",
+      "error": null
+    }
+  ]
+}

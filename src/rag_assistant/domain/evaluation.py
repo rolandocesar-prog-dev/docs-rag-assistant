@@ -118,8 +118,9 @@ class Verdict:
     correct: bool
 
 
-def build_judge_prompt(item: EvalItem, answer: Answer, fragments: Sequence[str]) -> str:
-    cited = "\n\n".join(f"[{n}] {text}" for n, text in enumerate(fragments, start=1))
+def build_judge_prompt(item: EvalItem, answer: Answer, fragments: Sequence[tuple[int, str]]) -> str:
+    """`fragments` son los citados, con el número `[n]` que usa la respuesta."""
+    cited = "\n\n".join(f"[{n}] {text}" for n, text in fragments)
     return (
         f"Pregunta: {item.question}\n\n"
         f"Fragmentos citados:\n{cited or '(ninguno)'}\n\n"
