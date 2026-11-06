@@ -2,7 +2,7 @@
 
 import httpx2
 
-from rag_assistant.adapters.ollama_http import new_client, post_json
+from rag_assistant.adapters.ollama_http import new_client, post_ollama
 from rag_assistant.domain.completion import Completion
 from rag_assistant.domain.errors import LLMError
 
@@ -38,7 +38,7 @@ class OllamaChat:
         return cls(new_client(base_url), model=model, max_tokens=max_tokens)
 
     def complete(self, system: str, user: str) -> Completion:
-        payload = post_json(
+        payload = post_ollama(
             self._client,
             "/api/chat",
             {

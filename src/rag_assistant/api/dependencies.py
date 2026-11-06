@@ -6,7 +6,7 @@ from fastapi import HTTPException, status
 
 from rag_assistant.adapters.database import create_database_engine
 from rag_assistant.adapters.embeddings.ollama import OllamaEmbeddings
-from rag_assistant.adapters.llm.ollama import OllamaChat
+from rag_assistant.adapters.llm.factory import create_llm
 from rag_assistant.adapters.vectorstore.pgvector import PgVectorStore
 from rag_assistant.application.ask import AskService
 from rag_assistant.config import get_settings
@@ -27,9 +27,7 @@ def get_ask_service() -> AskService:
             batch_size=settings.embedding_batch_size,
         ),
         PgVectorStore(create_database_engine(settings.database_url)),
-        OllamaChat.from_url(
-            settings.ollama_url, model=settings.llm_model, max_tokens=settings.llm_max_tokens
-        ),
+        create_llm(settings),
         k=settings.retrieval_k,
         threshold=settings.relevance_threshold,
     )

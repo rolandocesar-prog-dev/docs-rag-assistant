@@ -2,6 +2,8 @@
 
 import httpx2
 
+from rag_assistant.adapters.http_json import post_json
+
 # La primera llamada carga el modelo en memoria; en CPU puede tardar.
 DEFAULT_TIMEOUT_SECONDS = 300.0
 
@@ -10,7 +12,7 @@ def new_client(base_url: str) -> httpx2.Client:
     return httpx2.Client(base_url=base_url, timeout=DEFAULT_TIMEOUT_SECONDS)
 
 
-def post_json(
+def post_ollama(
     client: httpx2.Client,
     path: str,
     body: dict[str, object],
@@ -18,19 +20,15 @@ def post_json(
     model: str,
     error: type[Exception],
 ) -> object:
-    """POST a Ollama; traduce los fallos HTTP a `error` con un mensaje accionable."""
-    try:
-        response = client.post(path, json=body)
-    except httpx2.HTTPError as cause:
-        raise error(f"Ollama no responde en {client.base_url}: {cause}") from cause
-    if response.status_code == httpx2.codes.NOT_FOUND:
-        raise error(
+    """POST a Ollama; si falta el modelo, el error dice cómo descargarlo."""
+    return post_json(
+        client,
+        path,
+        body,
+        error=error,
+        provider="Ollama",
+        not_found=(
             f"Ollama no tiene el modelo «{model}». Descárgalo con: ollama pull {model} "
             f"(con Ollama en Docker: docker compose exec ollama ollama pull {model})"
-        )
-    if response.is_error:
-        raise error(f"Ollama respondió {response.status_code}: {response.text[:200]}")
-    try:
-        return response.json()
-    except ValueError as cause:
-        raise error(f"Ollama devolvió una respuesta que no es JSON: {cause}") from cause
+        ),
+    )

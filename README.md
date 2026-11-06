@@ -73,6 +73,25 @@ Si la documentación no cubre la pregunta, responde `found: false` sin inventar 
 (pregunta vacía o de más de 1 000 caracteres), `502` (falló el modelo) y `503` (la base no
 responde).
 
+## Cambiar de modelo de lenguaje
+
+Por defecto responde un modelo local (Ollama). Para usar un servicio remoto basta con el `.env`,
+sin tocar código:
+
+```bash
+# Anthropic (SDK oficial; por defecto claude-opus-5-5)
+RAG_LLM_PROVIDER=anthropic
+RAG_LLM_API_KEY=...
+
+# Cualquier API compatible con OpenAI
+RAG_LLM_PROVIDER=openai_compatible
+RAG_LLM_BASE_URL=https://api.openai.com/v1
+RAG_LLM_MODEL=...
+RAG_LLM_API_KEY=...
+```
+
+Los embeddings siguen en Ollama con `bge-m3`, así que la base no hay que volver a ingestarla.
+
 ## Calidad
 
 ```bash

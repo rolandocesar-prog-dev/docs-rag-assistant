@@ -6,12 +6,14 @@ from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import OperationalError
 
+from rag_assistant.config import ConfigurationError
 from rag_assistant.domain.errors import EmbeddingError, InvalidQuestionError, LLMError
 
 _STATUS_BY_ERROR: dict[type[Exception], int] = {
     InvalidQuestionError: status.HTTP_422_UNPROCESSABLE_CONTENT,
     EmbeddingError: status.HTTP_502_BAD_GATEWAY,
     LLMError: status.HTTP_502_BAD_GATEWAY,
+    ConfigurationError: status.HTTP_503_SERVICE_UNAVAILABLE,
 }
 
 

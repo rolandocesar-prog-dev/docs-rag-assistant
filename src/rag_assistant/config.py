@@ -1,8 +1,16 @@
 """Configuración de la aplicación, leída de variables de entorno (prefijo RAG_)."""
 
 from functools import lru_cache
+from typing import Literal
 
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+LLMProviderName = Literal["ollama", "openai_compatible", "anthropic"]
+
+
+class ConfigurationError(RuntimeError):
+    """Falta o es inválida una variable de entorno necesaria (RF-04)."""
 
 
 class Settings(BaseSettings):
@@ -15,8 +23,12 @@ class Settings(BaseSettings):
     ollama_url: str = "http://127.0.0.1:11434"
     embedding_model: str = "bge-m3"
     embedding_batch_size: int = 32
-    llm_model: str = "qwen3.5:4b"
-    llm_max_tokens: int = 400
+    # LLM (RF-04): sin modelo ni tope, se usan los valores por defecto del proveedor.
+    llm_provider: LLMProviderName = "ollama"
+    llm_model: str | None = None
+    llm_max_tokens: int | None = None
+    llm_api_key: SecretStr | None = None
+    llm_base_url: str | None = None
     retrieval_k: int = 4
     relevance_threshold: float = 0.45
 

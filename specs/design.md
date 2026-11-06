@@ -194,6 +194,34 @@ tema y 1 fuera de él), 4 fragmentos de contexto y Ollama en Docker solo con CPU
   `OllamaEmbeddings` el manejo de errores HTTP (`adapters/ollama_http.py`): sin respuesta, modelo
   no descargado (404, con el comando para descargarlo) u otro error.
 
+**Proveedores de LLM intercambiables (RF-04)** — `RAG_LLM_PROVIDER` elige el adaptador al armar la
+app (`adapters/llm/factory.py`); el resto del código solo conoce el puerto `LLMProvider`:
+
+| Proveedor              | Adaptador              | Modelo por defecto | Tope por defecto | Cliente                 |
+| ---------------------- | ---------------------- | ------------------ | ---------------- | ----------------------- |
+| `ollama` (por defecto) | `OllamaChat`           | `qwen3.5:4b`       | 400              | `httpx2`                |
+| `openai_compatible`    | `OpenAICompatibleChat` | — (obligatorio)    | 1 024            | `httpx2`                |
+| `anthropic`            | `AnthropicChat`        | `claude-opus-5-5`  | 4 096            | SDK oficial `anthropic` |
+
+- `RAG_LLM_MODEL` y `RAG_LLM_MAX_TOKENS` son opcionales: si faltan, se usa el valor por defecto
+  del proveedor. `RAG_LLM_API_KEY` es la clave de los proveedores remotos y `RAG_LLM_BASE_URL` la
+  dirección del servicio compatible con OpenAI (por ejemplo `https://api.openai.com/v1`).
+- **Compatible con OpenAI**: `POST {base}/chat/completions` con `Authorization: Bearer`, mensajes
+  `system` y `user`, `max_tokens` y `temperature` 0,1. Sirve para OpenAI y para cualquier servicio
+  con la misma API (vLLM, LM Studio, el propio Ollama en `/v1`, etc.). `finish_reason: "length"`
+  marca la respuesta como cortada. Comparte el manejo de errores HTTP con los adaptadores de Ollama.
+- **Anthropic**: SDK oficial (`client.beta.messages.create`), que ya usa `httpx2` y reintenta solo
+  los errores transitorios. En `claude-opus-5-5` el razonamiento interno siempre está activo y
+  cuenta dentro de `max_tokens`, por eso el tope es mayor (4 096) y el esfuerzo es `low`, el
+  recomendado para respuestas breves de chat. En los modelos que lo admiten se envía
+  `fallbacks: "default"` (beta `server-side-fallback-2026-07-01`): si los filtros de seguridad
+  rechazan por error una pregunta legítima, el propio servicio la reintenta con otro modelo.
+  `stop_reason: "max_tokens"` marca la respuesta como cortada y `"refusal"` lanza `LLMError`.
+  Los errores del SDK se traducen a `LLMError` con un mensaje claro: clave inválida, modelo
+  inexistente, límite de uso, error del servicio o sin conexión.
+- Pruebas: unitarias con transportes simulados de `httpx2` (el SDK de Anthropic acepta un cliente
+  HTTP propio), sin red ni claves.
+
 ### Cargadores (RF-01)
 
 Todos leen UTF-8 (con o sin BOM), unifican los fines de línea en `\n`, quitan espacios al final de

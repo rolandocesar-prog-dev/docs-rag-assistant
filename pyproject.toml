@@ -12,6 +12,7 @@ authors = [{ name = "Rolando César Vásquez Tavera" }]
 requires-python = ">=3.11"
 dependencies = [
   "alembic>=1.20",
+  "anthropic>=2.6",
   "fastapi>=0.115",
   "httpx2>=2.16",
   "psycopg[binary]>=3.3",

@@ -4,7 +4,7 @@ from collections.abc import Sequence
 
 import httpx2
 
-from rag_assistant.adapters.ollama_http import new_client, post_json
+from rag_assistant.adapters.ollama_http import new_client, post_ollama
 from rag_assistant.domain.errors import EmbeddingError
 from rag_assistant.domain.retrieval import EMBEDDING_DIMENSIONS
 
@@ -36,7 +36,7 @@ class OllamaEmbeddings:
         return vectors
 
     def _embed_batch(self, batch: Sequence[str]) -> list[tuple[float, ...]]:
-        payload = post_json(
+        payload = post_ollama(
             self._client,
             "/api/embed",
             {"model": self._model, "input": list(batch)},
