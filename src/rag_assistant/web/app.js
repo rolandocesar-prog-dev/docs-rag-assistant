@@ -14,6 +14,11 @@ const emptyHint = document.getElementById("empty");
 
 let askCount = 0;
 
+// Altura real del formulario fijo, para que los mensajes no queden ocultos detrás de él.
+new ResizeObserver(() => {
+  document.documentElement.style.setProperty("--form-height", `${form.offsetHeight}px`);
+}).observe(form);
+
 function element(tag, className, text) {
   const node = document.createElement(tag);
   if (className) node.className = className;

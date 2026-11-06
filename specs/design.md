@@ -474,6 +474,9 @@ mediante `dependency_overrides`. La CLI y la API crean la conexión a la base co
   resalta su tarjeta (RF-03).
 - `found: false` se muestra como aviso neutro; los errores (422, 502, 503) muestran el `detail`
   de la API.
+- Cada mensaje nuevo se desplaza a la vista. Como el formulario está fijo abajo, la página usa
+  `scroll-padding-bottom` con su altura real (`--form-height`, medida con un `ResizeObserver`
+  porque el cuadro de texto se puede agrandar), así el último mensaje no queda tapado.
 - **Seguridad**: el texto de la API nunca se inserta como HTML (`textContent` y nodos creados con
   `document.createElement`), así una respuesta del modelo no puede inyectar código. Una prueba
   verifica que `app.js` no use `innerHTML`.
